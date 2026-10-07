@@ -1,14 +1,24 @@
 # backend/app/schemas/sensors.py
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 class SensorSchema(BaseModel):
+    """Датчик в ответе API. location собирается из lat/lon модели Sensor."""
     id: int
     district_id: int | None
     name: str
     sensor_type: str  # air или water
-    location: list[float] = Field(..., description="Координаты датчика [lat, lon] для маркера на карте")
     status: str
+
+    lat: float = Field(exclude=True)
+    lon: float = Field(exclude=True)
+    location: list[float] = []
+
+    @model_validator(mode="after")
+    def fill_location(self) -> "SensorSchema":
+        """Собираем [lat, lon] для маркера на карте из реальной геометрии."""
+        self.location = [self.lat, self.lon]
+        return self
 
     class Config:
         from_attributes = True

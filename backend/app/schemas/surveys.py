@@ -35,7 +35,7 @@ class SurveyCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=255, description="Название опроса")
     description: str | None = Field(None, max_length=1000, description="Описание опроса")
     is_active: bool = True
-    questions: list[QuestionCreate] = Field(..., min_items=1, description="Опрос должен содержать хотя бы один вопрос")
+    questions: list[QuestionCreate] = Field(..., min_length=1, description="Опрос должен содержать хотя бы один вопрос")
 
 class SurveyOut(BaseModel):
     id: int
@@ -55,4 +55,4 @@ class SingleAnswerSubmit(BaseModel):
     text_answer: str | None = Field(None, max_length=1000, description="Текст ответа для открытых вопросов")
 
 class SurveyAnswersSubmit(BaseModel):
-    answers: list[SingleAnswerSubmit] = Field(..., min_items=1)
+    answers: list[SingleAnswerSubmit] = Field(..., min_length=1)

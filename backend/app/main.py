@@ -10,10 +10,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Настройка CORS-политик, чтобы фронтенд (React на Vite) мог без проблем делать запросы
+# CORS: браузер запрещает allow_origins=["*"] вместе с allow_credentials=True.
+# Поэтому перечисляем конкретные адреса фронтенда (Vite по умолчанию на 5173).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # На хакатоне разрешаем доступ со всех хостов для удобства тестирования команды
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

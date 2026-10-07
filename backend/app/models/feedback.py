@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, ForeignKey, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship, column_property
 from geoalchemy2 import Geometry
-from app.database import Base
+from app.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.models.users import User
@@ -21,12 +21,16 @@ class Report(Base):
     description: Mapped[str] = mapped_column(String(1000), nullable=False)
     location = mapped_column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="NEW")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
     user: Mapped["User"] = relationship("User", back_populates="reports")
     district: Mapped[Optional["District"]] = relationship("District", back_populates="reports")
     attachments: Mapped[List["ReportAttachment"]] = relationship("ReportAttachment", back_populates="report", cascade="all, delete-orphan")
     incidents: Mapped[List["Incident"]] = relationship("Incident", secondary="incident_reports", back_populates="reports")
+
+    # Координаты точки жалобы, вычисляемые из геометрии при каждом SELECT
+    lat = column_property(func.ST_Y(location))
+    lon = column_property(func.ST_X(location))
 
 
 class ReportAttachment(Base):

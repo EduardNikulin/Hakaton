@@ -1,6 +1,6 @@
 # backend/app/schemas/feedback.py
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 class ReportAttachmentSchema(BaseModel):
     id: int
@@ -10,9 +10,10 @@ class ReportAttachmentSchema(BaseModel):
         from_attributes = True
 
 class ReportCreate(BaseModel):
+    """Данные для создания жалобы (тело запроса POST /reports)."""
     category: str = Field(..., min_length=2, max_length=100)
     description: str = Field(..., min_length=5, max_length=1000)
-    location: list[float] = Field(..., min_items=2, max_items=2)
+    location: list[float] = Field(..., min_length=2, max_length=2)
 
     @field_validator("location")
     @classmethod
@@ -25,15 +26,26 @@ class ReportCreate(BaseModel):
         return v
 
 class ReportOut(BaseModel):
+    """Жалоба в ответе API. location собирается из lat/lon модели Report."""
     id: int
     user_id: int
     district_id: int | None
     category: str
     description: str
-    location: list[float]
     status: str
     created_at: datetime
     attachments: list[ReportAttachmentSchema] = []
+
+    lat: float = Field(exclude=True)
+    lon: float = Field(exclude=True)
+    location: list[float] = []
+
+    @model_validator(mode="after")
+    def fill_location(self) -> "ReportOut":
+        """Собираем [lat, lon] для фронтенда из реальных координат точки."""
+        self.location = [self.lat, self.lon]
+        return self
+
 
     class Config:
         from_attributes = True

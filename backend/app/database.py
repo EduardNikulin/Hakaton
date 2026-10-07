@@ -2,6 +2,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
+from datetime import datetime, timezone
 
 # Асинхронный движок для работы с PostgreSQL
 engine = create_async_engine(settings.DATABASE_URL, echo=False)
@@ -12,6 +13,10 @@ AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_
 # Базовый класс для всех моделей проекта
 class Base(DeclarativeBase):
     pass
+
+def utcnow() -> datetime:
+    """Время UTC без tzinfo (столбцы базы данных - это ВРЕМЕННЫЕ метки БЕЗ ЧАСОВОГО ПОЯСА)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 # Зависимость (Dependency) для внедрения сессии БД в роутеры FastAPI
 async def get_db():

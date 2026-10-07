@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database import Base
+from app.database import Base, utcnow
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ class Survey(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(1000))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     questions: Mapped[List["Question"]] = relationship("Question", back_populates="survey", cascade="all, delete-orphan")
 
@@ -54,6 +54,6 @@ class SurveyAnswer(Base):
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     option_id: Mapped[Optional[int]] = mapped_column(ForeignKey("question_options.id", ondelete="SET NULL"))
     text_answer: Mapped[Optional[str]] = mapped_column(String(1000))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="answers")
