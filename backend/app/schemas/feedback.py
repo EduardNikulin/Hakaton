@@ -1,6 +1,6 @@
 # backend/app/schemas/feedback.py
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 class ReportAttachmentSchema(BaseModel):
     id: int
@@ -13,6 +13,7 @@ class ReportCreate(BaseModel):
     """Данные для создания жалобы (тело запроса POST /reports)."""
     category: str = Field(..., min_length=2, max_length=100)
     description: str = Field(..., min_length=5, max_length=1000)
+    # Ровно 2 числа: [широта, долгота]
     location: list[float] = Field(..., min_length=2, max_length=2)
 
     @field_validator("location")
@@ -26,7 +27,7 @@ class ReportCreate(BaseModel):
         return v
 
 class ReportOut(BaseModel):
-    """Жалоба в ответе API. location собирается из lat/lon модели Report."""
+    """Жалоба в ответе API. location вычисляется из lat/lon модели Report."""
     id: int
     user_id: int
     district_id: int | None
@@ -36,16 +37,17 @@ class ReportOut(BaseModel):
     created_at: datetime
     attachments: list[ReportAttachmentSchema] = []
 
+    # Координаты из column_property модели (ST_Y/ST_X геометрии); в JSON не попадают
     lat: float = Field(exclude=True)
     lon: float = Field(exclude=True)
-    location: list[float] = []
 
-    @model_validator(mode="after")
-    def fill_location(self) -> "ReportOut":
-        """Собираем [lat, lon] для фронтенда из реальных координат точки."""
-        self.location = [self.lat, self.lon]
-        return self
-
+    # computed_field не читается из ORM-объекта (там location - это геометрия WKBElement),
+    # а собирается при отдаче ответа из lat/lon
+    @computed_field
+    @property
+    def location(self) -> list[float]:
+        """[широта, долгота] точки жалобы для фронтенда."""
+        return [self.lat, self.lon]
 
     class Config:
         from_attributes = True

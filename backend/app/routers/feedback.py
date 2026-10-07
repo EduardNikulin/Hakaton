@@ -50,9 +50,13 @@ async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(ge
     # Повторный SELECT со связями: в async-режиме ленивая загрузка запрещена,
     # поэтому attachments и вычисляемые lat/lon подгружаем сразу (selectinload)
     result = await db.execute(
-        select(Report).where(Report.id == new_report.id).options(selectinload(Report.attachments))
+        select(Report)
+        .where(Report.id == new_report.id)
+        .options(selectinload(Report.attachments))
     )
-    return result.scalars().one()
+    created_report = result.scalars().one()
+
+    return ReportOut.model_validate(created_report)
 
 @router.get("/reports", response_model=list[ReportOut])
 async def get_all_reports(district_id: int | None = None, db: AsyncSession = Depends(get_db)):

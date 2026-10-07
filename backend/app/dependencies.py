@@ -29,23 +29,25 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
-    
+
     if user is None:
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Пользователь заблокирован")
-        
+
     return user
 
 class RoleChecker:
-    """Универсальный класс проверки разрешенных ролей для эндпоинтов."""
     def __init__(self, allowed_roles: list[str]):
-        self.allowed_roles = allowed_roles
+        # Нормализуем роли в нижний регистр: защищает от 403 из-за "Admin"/"ADMIN" в БД
+        self.allowed_roles = [r.lower() for r in allowed_roles]
 
     def __call__(self, current_user: User = Depends(get_current_user)):
-        if current_user.role not in self.allowed_roles:
+        # Роль пользователя тоже приводим к нижнему регистру перед сверкой
+        role = (current_user.role or "").lower()
+        if self.allowed_roles and role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для выполнения данной операции"
+                detail=f"У вас нет прав для выполнения этого действия. Требуемые роли: {self.allowed_roles}"
             )
         return current_user

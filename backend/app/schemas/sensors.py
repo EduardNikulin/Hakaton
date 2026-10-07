@@ -1,24 +1,26 @@
 # backend/app/schemas/sensors.py
 from datetime import datetime
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field
 
 class SensorSchema(BaseModel):
-    """Датчик в ответе API. location собирается из lat/lon модели Sensor."""
+    """Датчик в ответе API. location вычисляется из lat/lon модели Sensor."""
     id: int
     district_id: int | None
     name: str
     sensor_type: str  # air или water
     status: str
 
+    # Координаты из column_property модели (ST_Y/ST_X геометрии); в JSON не попадают
     lat: float = Field(exclude=True)
     lon: float = Field(exclude=True)
-    location: list[float] = []
 
-    @model_validator(mode="after")
-    def fill_location(self) -> "SensorSchema":
-        """Собираем [lat, lon] для маркера на карте из реальной геометрии."""
-        self.location = [self.lat, self.lon]
-        return self
+    # computed_field не читается из ORM-объекта (там location - это геометрия WKBElement),
+    # а собирается при отдаче ответа из lat/lon
+    @computed_field
+    @property
+    def location(self) -> list[float]:
+        """[широта, долгота] датчика для маркера на карте."""
+        return [self.lat, self.lon]
 
     class Config:
         from_attributes = True
