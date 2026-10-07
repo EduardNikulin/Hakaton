@@ -1,9 +1,10 @@
 # simulator/main.py
 """Оркестратор демонстрации обнаружения экологического инцидента.
 
-Запуск (из любого места, venv активирован):
-    python simulator/main.py --mode incident   # полный сценарий
-    python simulator/main.py --mode normal     # фоновая симуляция
+Запуск (из папки simulator/, venv активирован):
+    cd simulator
+    python main.py --mode incident --cleanup   # полный сценарий
+    python main.py --mode normal               # фоновая симуляция
 
 Сценарий incident: поиск датчика -> проверка района -> 3 свежие жалобы ->
 аномальные pm25 через sensor_simulator.py -> ожидание BackgroundTasks ->
@@ -21,17 +22,22 @@ from pathlib import Path
 
 import requests
 
+# Единый источник адреса API - config.py (чтобы не было двух разных env-переменных)
+from config import API_BASE_URL
 # --- Конфигурация: переменные окружения с дефолтами ---
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
 INCIDENT_REPORTS_REQUIRED = int(os.getenv("INCIDENT_REPORTS_REQUIRED", "3"))
 INCIDENT_DETECTION_WAIT_SECONDS = float(
     os.getenv("INCIDENT_DETECTION_WAIT_SECONDS", "3")
 )
 INCIDENT_REPORT_RADIUS_METERS = int(os.getenv("INCIDENT_REPORT_RADIUS_METERS", "1000"))
 
-# Demo-пользователь из seed.py (роль resident подходит: жалобы создаёт любой авторизованный)
+# Demo-пользователь из seed.py. Пароли ниже - ТОЛЬКО для локального хакатона,
+# в реальном окружении задавайте их через env (DEMO_PASSWORD/DEMO_ADMIN_PASSWORD).
+# Роль resident подходит: жалобы создаёт любой авторизованный.
 DEMO_EMAIL = os.getenv("DEMO_EMAIL", "resident@ecocity.local")
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "Resident123!")
+DEMO_ADMIN_EMAIL = os.getenv("DEMO_ADMIN_EMAIL", "admin@ecocity.local")
+DEMO_ADMIN_PASSWORD = os.getenv("DEMO_ADMIN_PASSWORD", "Admin123!")
 
 # Существующий симулятор запускаем subprocess-ом (плоские импорты config/scenarios)
 SIMULATOR_SCRIPT = Path(__file__).resolve().parent / "sensor_simulator.py"
@@ -61,19 +67,19 @@ def ensure_backend(session: requests.Session) -> None:
         sys.exit(2)
 
 
-def login(session: requests.Session) -> None:
+def login(session: requests.Session, email: str = DEMO_EMAIL, password: str = DEMO_PASSWORD) -> None:
     """OAuth2 form-data логин; токен кладём в заголовок сессии."""
     try:
         resp = session.post(
             f"{API_BASE_URL}/auth/login",
-            data={"username": DEMO_EMAIL, "password": DEMO_PASSWORD},
+            data={"username": email, "password": password},
             timeout=REQUEST_TIMEOUT,
         )
     except requests.RequestException as exc:
         fail(f"Backend is not available during login: {exc}", 2)
     if resp.status_code != 200:
         fail(
-            f"Failed to login as demo user: HTTP {resp.status_code}. "
+            f"Failed to login as {email}: HTTP {resp.status_code}. "
             f"Run backend/scripts/seed.py first."
         )
     session.headers["Authorization"] = f"Bearer {resp.json()['access_token']}"
@@ -89,6 +95,25 @@ def get_incidents(session: requests.Session) -> list[dict]:
 def active_incident_districts(incidents: list[dict]) -> set[int]:
     """Районы, где есть инцидент со статусом, отличным от RESOLVED (правило дедупликации)."""
     return {i["district_id"] for i in incidents if i["status"] != "RESOLVED"}
+
+
+def resolve_open_incidents(session: requests.Session) -> int:
+    """Закрывает все незакрытые инциденты под admin. Нужно для повторяемости демо:
+    детектор не создаёт новый инцидент в районе, где уже есть открытый."""
+    login(session, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD)
+    resolved = 0
+    for inc in get_incidents(session):
+        if inc["status"] == "RESOLVED":
+            continue
+        resp = session.patch(
+            f"{API_BASE_URL}/incidents/{inc['id']}/status",
+            json={"status": "RESOLVED", "operator_comment": "Auto-reset by demo orchestrator"},
+            timeout=REQUEST_TIMEOUT,
+        )
+        if resp.status_code != 200:
+            fail(f"Failed to resolve incident {inc['id']}: HTTP {resp.status_code}")
+        resolved += 1
+    return resolved
 
 
 def find_suitable_sensor(sensors: list[dict], blocked: set[int]) -> dict | None:
@@ -175,10 +200,15 @@ def wait_for_incident(
         time.sleep(POLL_INTERVAL_SECONDS)
 
 
-def run_incident_demo(debug: bool) -> None:
+def run_incident_demo(cleanup: bool = False) -> None:
     session = requests.Session()
 
     ensure_backend(session)
+
+    if cleanup:
+        print("[0/6] Resolving open incidents (cleanup)...")
+        print(f"      Resolved incidents: {resolve_open_incidents(session)}")
+
     login(session)
 
     print("[1/6] Searching for available sensor...")
@@ -298,13 +328,18 @@ def main() -> None:
         action="store_true",
         help="показывать полный traceback при неожиданной ошибке",
     )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="закрыть открытые инциденты перед запуском (повторяемость демо)",
+    )
     args = parser.parse_args()
 
     try:
         if args.mode == "normal":
             run_normal_demo(args.count)
         else:
-            run_incident_demo(args.debug)
+            run_incident_demo(args.cleanup)
     except SystemExit:
         raise
     except Exception as exc:  # неожиданные ошибки: кратко, traceback только в debug

@@ -19,10 +19,11 @@ def normal_value(metric: str) -> tuple[float, str]:
 
 
 def incident_value(metric: str) -> tuple[float, str]:
-    """Аномальный всплеск: PM2.5 90-140 (порог детектора 55), вода pH < 6."""
+    """Аномальный всплеск: воздух 110-150 (выше порогов и pm25=55, и no2=100), вода pH < 6 (ниже порога 6)."""
+
     if metric == "ph":
         return round(random.uniform(4.5, 5.8), 2), "ANOMALY"
-    return round(random.uniform(90.0, 140.0), 2), "ANOMALY"
+    return round(random.uniform(110.0, 150.0), 2), "ANOMALY"
 
 
 def recovery_value(metric: str) -> tuple[float, str]:

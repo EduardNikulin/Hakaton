@@ -99,7 +99,8 @@ async def update_report(id: int, description: str, db: AsyncSession = Depends(ge
 async def delete_report(id: int, db: AsyncSession = Depends(get_db), current_user: User = allow_residents):
     """Удаление жалобы автором или администратором системы (Delete)."""
     query = select(Report).where(Report.id == id)
-    if current_user.role != "admin":
+    # Регистронезависимо, как в RoleChecker: "Admin"/"ADMIN" тоже должны иметь права
+    if (current_user.role or "").lower() != "admin":
         query = query.where(Report.user_id == current_user.id)
 
     result = await db.execute(query)

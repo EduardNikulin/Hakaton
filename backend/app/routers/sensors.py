@@ -35,6 +35,14 @@ async def get_sensor_history(id: int, db: AsyncSession = Depends(get_db)):
 @router.post("/iot/measurements", status_code=status.HTTP_201_CREATED)
 async def receive_iot_measurement(data: MeasurementCreate, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     """Точка входа для скрипта-симулятора. Запускает BackgroundTasks автодетектора инцидентов."""
+    # Проверяем, что датчик существует: иначе вставка упадёт на FK с неинформативным 500
+    sensor_result = await db.execute(select(Sensor).where(Sensor.id == data.sensor_id))
+    if sensor_result.scalars().first() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Датчик с id={data.sensor_id} не найден в системе",
+        )
+
     new_measurement = SensorMeasurement(
         sensor_id=data.sensor_id,
         value=data.value,

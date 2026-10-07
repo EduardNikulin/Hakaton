@@ -8,9 +8,14 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.core import District
 from app.models.feedback import Report
-from app.models.sensors import SensorMeasurement, EcoIndexHistory
+from app.models.sensors import Sensor, SensorMeasurement, EcoIndexHistory
 from app.schemas.core import DistrictSchema, EciStatsSchema, DistrictShortOut
 from app.dependencies import RoleChecker
+from app.services.eci import air_score, water_score, citizen_score, trend_score
+
+# Единый источник имён метрик (нижний регистр, как в seed/eci_calculator/detector)
+PM25_METRICS = ("pm25", "pm2.5")
+PH_METRICS = ("ph",)
 
 router = APIRouter(prefix="/api/v1/maps", tags=["Yandex Maps Layers"])
 
@@ -20,7 +25,7 @@ allow_admin = Depends(RoleChecker(allowed_roles=["admin"]))
 @router.get("/districts", response_model=list[DistrictSchema])
 async def get_map_districts(db: AsyncSession = Depends(get_db)):
     """
-    Главная ручка для Яндекс Карт. 
+    Главная ручка для Яндекс Карт.
     Возвращает границы районов в формате GeoJSON, текущий ECI индекс и цвет hex для покраски полигонов.
     """
     # Вытаскиваем районы, на лету конвертируя бинарную геометрию PostGIS в текстовый GeoJSON
@@ -39,7 +44,7 @@ async def get_map_districts(db: AsyncSession = Depends(get_db)):
     for row in rows:
         # Парсим текстовую строку GeoJSON, полученную от базы данных, обратно в словарь Python
         geojson_dict = json.loads(row.geojson) if row.geojson else {}
-        
+
         districts.append({
             "id": row.id,
             "city_id": row.city_id,
@@ -59,7 +64,7 @@ async def get_districts_short_list(db: AsyncSession = Depends(get_db)):
 @router.get("/districts/{id}/stats", response_model=EciStatsSchema)
 async def get_district_eci_explainability(id: int, db: AsyncSession = Depends(get_db)):
     """
-    Объяснимость ECI индекса. 
+    Объяснимость ECI индекса.
     Модальное окно при клике на район, раскрывающее вклады всех 4 компонентов в экологию.
     """
     # Проверяем физическое существование района
@@ -71,29 +76,31 @@ async def get_district_eci_explainability(id: int, db: AsyncSession = Depends(ge
     # формируя честные вклады компонентов в итоговую оценку района.
     air_query = await db.execute(
         select(func.avg(SensorMeasurement.value))
-        .join(SensorMeasurement.sensor)
-        .where(SensorMeasurement.sensor.has(district_id=id), SensorMeasurement.metric_name == "PM2.5")
+        .join(Sensor, Sensor.id == SensorMeasurement.sensor_id)
+        .where(Sensor.district_id == id,
+               func.lower(SensorMeasurement.metric_name).in_(PM25_METRICS))
     )
-    avg_air = air_query.scalar() or 20.0  # Дефолтная норма, если датчиков еще нет
+    avg_air = air_query.scalar()
 
     water_query = await db.execute(
         select(func.avg(SensorMeasurement.value))
-        .join(SensorMeasurement.sensor)
-        .where(SensorMeasurement.sensor.has(district_id=id), SensorMeasurement.metric_name == "pH")
+        .join(Sensor, Sensor.id == SensorMeasurement.sensor_id)
+        .where(Sensor.district_id == id,
+               func.lower(SensorMeasurement.metric_name).in_(PH_METRICS))
     )
-    avg_water = water_query.scalar() or 7.0
+    avg_water = water_query.scalar()
 
     reports_query = await db.execute(
         select(func.count(Report.id)).where(Report.district_id == id, Report.status != "RESOLVED")
     )
     citizen_complaints = reports_query.scalar() or 0
 
-    # Маппим значения к диапазону 0..100 для красивого вывода графиков
+    # Единая семантика с services/eci.py: ВЫШЕ = ЧИЩЕ
     return {
-        "air_score": min(float(avg_air) * 1.5, 100.0),
-        "water_score": min(float(avg_water) * 10.0, 100.0),
-        "citizen_score": min(float(citizen_complaints) * 12.0, 100.0),
-        "trend_score": 35.5  # Статичный тренд стабильности среды для MVP
+        "air_score": round(air_score(avg_air if avg_air is not None else 10.0), 1),
+        "water_score": round(water_score(avg_water if avg_water is not None else 7.5), 1),
+        "citizen_score": round(citizen_score(citizen_complaints), 1),
+        "trend_score": round(trend_score(0.0), 1),
     }
 
 @router.delete("/districts/{id}", status_code=status.HTTP_200_OK, dependencies=[allow_admin])
@@ -103,7 +110,7 @@ async def admin_delete_district(id: int, db: AsyncSession = Depends(get_db)):
     district = result.scalars().first()
     if not district:
         raise HTTPException(status_code=404, detail="Район не найден")
-        
+
     await db.delete(district)
     await db.commit()
     return {"status": "success", "message": f"Район '{district.name}' успешно удален из картографии"}
