@@ -1,0 +1,11 @@
+pip install -r requirements.txt
+
+# Фон для ECI (свежие замеры в 24-ч окно):
+python sensor_simulator.py --mode normal --count 60
+
+# Проверка детекции (Московский округ - там нет открытого сид-инцидента):
+# 1) создать 3 жалобы жителями рядом с датчиком (<1 км, за последний час);
+# 2) всплеск:
+python sensor_simulator.py --mode incident --sensor-id <ID> --count 5
+# 3) GET /api/v1/incidents -> новый CRITICAL, жалобы -> IN_PROGRESS;
+# 4) следующий всплеск НЕ создаёт дубль (дедупликация).
