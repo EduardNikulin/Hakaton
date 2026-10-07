@@ -7,6 +7,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, RoleChecker
 from app.models.sensors import Sensor, SensorMeasurement
 from app.schemas.sensors import SensorSchema, MeasurementCreate, MeasurementHistoryOut
+from app.tasks.incident_detector import run_incident_detection
 
 router = APIRouter(prefix="/api/v1/sensors", tags=["IoT Sensors Gateway"])
 
@@ -43,8 +44,11 @@ async def receive_iot_measurement(data: MeasurementCreate, background_tasks: Bac
     db.add(new_measurement)
     await db.commit()
 
-    # Симулируем фоновый вызов инцидент-детектора, чтобы бэкенд не зависал на ГИС-расчетах
-    # background_tasks.add_task(run_incident_detector, data.sensor_id, data.value)
+    # Фоновая проверка детектора: аномалия + жалобы в радиусе -> инцидент.
+    # Задача стартует после отправки ответа, чтобы ГИС-расчеты не тормозили приём замера.
+    background_tasks.add_task(
+        run_incident_detection, data.sensor_id, data.metric_name, data.value
+    )
 
     return {"status": "accepted", "measurement_id": new_measurement.id}
 
