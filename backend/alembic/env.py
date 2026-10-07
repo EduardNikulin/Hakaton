@@ -12,7 +12,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.config import settings
 from app.models import Base
-import GeoAlchemy2
+import geoalchemy2
+
 
 config = context.config
 
@@ -33,13 +34,21 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 def do_run_migrations(connection):
+    # Функция-фильтр для исключения дублирования ГИС-индексов
+    def include_object(object, name, type_, reflected, compare_to):
+        if type_ == "index" and name and name.startswith("idx_"):
+            return False
+        return True
+
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_object=None 
+        include_object=include_object  # Подключаем наш фильтр
     )
+
     with context.begin_transaction():
         context.run_migrations()
+
 
 async def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section) or {}
