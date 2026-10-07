@@ -12,7 +12,7 @@ from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
-@router.post("/register", response_model=Token, status_code=status.HTTP_210_CREATED)
+@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """Регистрация нового пользователя в роли Жителя (resident)."""
     # Проверяем, существует ли пользователь с таким email
