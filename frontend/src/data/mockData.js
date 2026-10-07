@@ -81,3 +81,29 @@ export const districts = [
 
 // Активные опросы (пока просто счётчик)
 export const activeSurveysCount = 2;
+
+// ─────────────────────────────────────────────
+// Жалобы жителей (для отображения на карте)
+// ─────────────────────────────────────────────
+export const reports = [
+  { id: 'r1', category: 'Запах', status: 'NEW',         coords: [55.755, 37.615], districtId: 'central' },
+  { id: 'r2', category: 'Мусор', status: 'IN_PROGRESS', coords: [55.720, 37.610], districtId: 'south'   },
+  { id: 'r3', category: 'Сливы', status: 'RESOLVED',    coords: [55.785, 37.600], districtId: 'north'   },
+  { id: 'r4', category: 'Запах', status: 'NEW',         coords: [55.762, 37.632], districtId: 'central' },
+  { id: 'r5', category: 'Шум',   status: 'NEW',         coords: [55.740, 37.580], districtId: 'west'    },
+];
+
+// ─────────────────────────────────────────────
+// Инциденты (автосгенерированные детектором)
+// ─────────────────────────────────────────────
+export const incidents = [
+  {
+    id: 'i1',
+    severity: 'CRITICAL',
+    districtId: 'south',
+    title: 'Аномалия PM2.5',
+    sensorId: 's7',
+    reportIds: ['r2'],
+    createdAt: '2026-10-07T18:00:00',
+  },
+];
