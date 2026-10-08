@@ -31,7 +31,11 @@ async def create_report(
 
 
 @router.get("", response_model=list[ReportOut])
-async def get_all_reports(district_id: int | None = None, db: AsyncSession = Depends(get_db)):
+async def get_all_reports(
+    district_id: int | None = None,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
     """Все жалобы города (с фильтром по району) для меток на карте."""
     return await ReportService(db).list_reports(district_id)
 
