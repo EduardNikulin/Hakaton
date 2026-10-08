@@ -1,0 +1,8 @@
+.shell { display: flex; flex-direction: column; min-height: 100vh; background: #0f172a; color: #f1f5f9; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; background: #1e293b; border-bottom: 1px solid #334155; }
+.logo { font-weight: 700; font-size: 18px; color: #38bdf8; }
+.nav { display: flex; gap: 4px; }
+.navLink { padding: 8px 14px; border-radius: 6px; color: #94a3b8; text-decoration: none; font-size: 14px; }
+.navLink:hover { background: #334155; color: #f1f5f9; }
+.navLinkActive { padding: 8px 14px; border-radius: 6px; background: #0ea5e9; color: #fff; text-decoration: none; font-size: 14px; }
+.content { flex: 1; padding: 16px 24px; }
