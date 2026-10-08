@@ -51,7 +51,9 @@ class ReportService:
             )
         report.description = description
         await self.db.commit()
-        return report
+        # Перечитываем: column_property lat/lon должны быть загружены заново,
+        # иначе Pydantic при сериализации дёргает ленивую загрузку → MissingGreenlet (500).
+        return await self.reports.get(report_id)
 
     async def delete_report(self, *, report_id: int, user: User) -> None:
         report = await self.reports.get(report_id)
