@@ -7,12 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.core import City, District
 from app.models.feedback import Report
-from app.models.sensors import EcoIndexHistory, Sensor, SensorMeasurement
 from app.services.geo import make_point
 
-# Источники метрик — единый файл для всех запросов
-PM25_METRICS = ("pm25", "pm2.5")
-PH_METRICS = ("ph",)
+# Источники метрик вынесены в общий модуль eci_metrics (единый расчёт с картой)
+from app.services.eci_metrics import PM25_METRICS, PH_METRICS  # noqa: F401  (реэкспорт)
 
 
 class DistrictRepository:
@@ -128,38 +126,26 @@ class DistrictRepository:
     # ── ECI-статистика района ───────────────────────────────────────
 
     async def get_eci_stats(self, district_id: int) -> dict | None:
-        """Расклад ECI на компоненты: воздух, вода, жалобы."""
+        """Расклад ECI на компоненты — тем же расчётом, что и на карте.
+
+        Использует то же окно (settings.eci_window_hours) и реальный тренд,
+        поэтому компоненты в панели совпадают с итоговым eci_score района.
+        """
+        from app.config import settings
         from app.services.eci import air_score, water_score, citizen_score, trend_score
+        from app.services.eci_metrics import district_eci_inputs
 
         district = await self.get(district_id)
         if not district:
             return None
 
-        # Среднее PM2.5
-        avg_air = await self.db.scalar(
-            select(func.avg(SensorMeasurement.value))
-            .join(Sensor, Sensor.id == SensorMeasurement.sensor_id)
-            .where(Sensor.district_id == district_id,
-                   func.lower(SensorMeasurement.metric_name).in_(PM25_METRICS))
-        )
-        # Среднее pH
-        avg_water = await self.db.scalar(
-            select(func.avg(SensorMeasurement.value))
-            .join(Sensor, Sensor.id == SensorMeasurement.sensor_id)
-            .where(Sensor.district_id == district_id,
-                   func.lower(SensorMeasurement.metric_name).in_(PH_METRICS))
-        )
-        # Жалобы (нерешённые)
-        complaints = await self.db.scalar(
-            select(func.count(Report.id))
-            .where(Report.district_id == district_id, Report.status != "RESOLVED")
-        ) or 0
+        m = await district_eci_inputs(self.db, district_id, settings.eci_window_hours)
 
         return {
-            "air_score": round(air_score(avg_air if avg_air is not None else 10.0), 1),
-            "water_score": round(water_score(avg_water if avg_water is not None else 7.5), 1),
-            "citizen_score": round(citizen_score(complaints), 1),
-            "trend_score": round(trend_score(0.0), 1),
+            "air_score": round(air_score(m["avg_pm25"] if m["avg_pm25"] is not None else 10.0), 1),
+            "water_score": round(water_score(m["avg_ph"] if m["avg_ph"] is not None else 7.5), 1),
+            "citizen_score": round(citizen_score(m["complaints"]), 1),
+            "trend_score": round(trend_score(m["trend"]), 1),
         }
 
     # ── Geo-хелперы ─────────────────────────────────────────────────
