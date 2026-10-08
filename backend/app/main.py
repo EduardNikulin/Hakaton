@@ -80,8 +80,8 @@ app.add_middleware(
 
 # Подключаем роутеры к приложению FastAPI
 app.include_router(routers.auth_router)
-app.include_router(routers.feedback_router)
 app.include_router(routers.reports_router)
+app.include_router(routers.surveys_router)
 app.include_router(routers.sensors_router)
 app.include_router(routers.incidents_router)
 app.include_router(routers.analytics_router)
