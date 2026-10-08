@@ -6,10 +6,10 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 
 from app.database import get_db
-from app.models.core import District
+from app.models.core import City, District
 from app.models.feedback import Report
 from app.models.sensors import Sensor, SensorMeasurement, EcoIndexHistory
-from app.schemas.core import DistrictSchema, EciStatsSchema, DistrictShortOut
+from app.schemas.core import DistrictSchema, DistrictCreate, DistrictUpdate, EciStatsSchema, DistrictShortOut
 from app.dependencies import RoleChecker
 from app.services.eci import air_score, water_score, citizen_score, trend_score
 
@@ -21,6 +21,85 @@ router = APIRouter(prefix="/api/v1/maps", tags=["Yandex Maps Layers"])
 
 # Административные ограничения доступа
 allow_admin = Depends(RoleChecker(allowed_roles=["admin"]))
+
+
+
+def geojson_polygon_to_ewkt(coordinates: list) -> str:
+    """Преобразует GeoJSON-координаты полигона (кольца [lon, lat]) в EWKT-строку
+    с явным SRID 4326 - в таком виде PostGIS корректно сохраняет геометрию."""
+    rings = []
+    for ring in coordinates:
+        points = ", ".join(f"{lon} {lat}" for lon, lat in ring)
+        rings.append(f"({points})")
+    return "SRID=4326;POLYGON(" + ", ".join(rings) + ")"
+
+
+async def fetch_district_response(db: AsyncSession, district_id: int) -> dict:
+    """Собирает район в формате DistrictSchema (границы - через ST_AsGeoJSON)."""
+    result = await db.execute(
+        select(
+            District.id,
+            District.city_id,
+            District.name,
+            func.ST_AsGeoJSON(District.polygon).label("geojson"),
+            District.eci_score,
+            District.color_hex,
+        ).where(District.id == district_id)
+    )
+    row = result.first()
+    return {
+        "id": row.id,
+        "city_id": row.city_id,
+        "name": row.name,
+        "polygon_geojson": json.loads(row.geojson) if row.geojson else {},
+        "eci_score": row.eci_score,
+        "color_hex": row.color_hex,
+    }
+
+
+@router.post("/districts", response_model=DistrictSchema, status_code=status.HTTP_201_CREATED, dependencies=[allow_admin])
+async def create_district(data: DistrictCreate, db: AsyncSession = Depends(get_db)):
+    """Создание района с границами (доступ: Админ)."""
+    city_id = data.city_id
+    if city_id is None:
+        city_result = await db.execute(select(City).order_by(City.id).limit(1))
+        city = city_result.scalars().first()
+        if city is None:
+            raise HTTPException(
+                status_code=400,
+                detail="В базе нет ни одного города - сначала создайте город",
+            )
+        city_id = city.id
+
+    new_district = District(
+        city_id=city_id,
+        name=data.name,
+        polygon=geojson_polygon_to_ewkt(data.polygon),
+        eci_score=50.0,
+        color_hex=data.color_hex or "#f59e0b",
+    )
+    db.add(new_district)
+    await db.commit()
+    return await fetch_district_response(db, new_district.id)
+
+
+@router.patch("/districts/{id}", response_model=DistrictSchema, dependencies=[allow_admin])
+async def update_district(id: int, data: DistrictUpdate, db: AsyncSession = Depends(get_db)):
+    """Редактирование имени/границ/цвета района (доступ: Админ)."""
+    result = await db.execute(select(District).where(District.id == id))
+    district = result.scalars().first()
+    if not district:
+        raise HTTPException(status_code=404, detail="Район не найден")
+
+    if data.name is not None:
+        district.name = data.name
+    if data.polygon is not None:
+        district.polygon = geojson_polygon_to_ewkt(data.polygon)
+    if data.color_hex is not None:
+        district.color_hex = data.color_hex
+
+    await db.commit()
+    return await fetch_district_response(db, id)
 
 @router.get("/districts", response_model=list[DistrictSchema])
 async def get_map_districts(db: AsyncSession = Depends(get_db)):

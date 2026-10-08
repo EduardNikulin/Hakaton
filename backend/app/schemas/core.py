@@ -1,5 +1,5 @@
 # backend/app/schemas/core.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class CitySchema(BaseModel):
     id: int
@@ -36,3 +36,43 @@ class DistrictShortOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DistrictCreate(BaseModel):
+    """Создание района. polygon - координаты в формате GeoJSON (кольца [lon, lat])."""
+    name: str = Field(..., min_length=2, max_length=100)
+    polygon: list[list[list[float]]] = Field(..., description="GeoJSON Polygon coordinates")
+    city_id: int | None = None  # если не задан - первый город в БД
+    color_hex: str | None = None
+
+    @field_validator("polygon")
+    @classmethod
+    def validate_polygon(cls, v: list[list[list[float]]]) -> list[list[list[float]]]:
+        if not v:
+            raise ValueError("Полигон должен содержать хотя бы один контур")
+        for ring in v:
+            if len(ring) < 4:
+                raise ValueError("Контур полигона должен содержать минимум 4 точки")
+            if ring[0] != ring[-1]:
+                raise ValueError("Контур должен быть замкнут: первая точка равна последней")
+            for point in ring:
+                if len(point) != 2:
+                    raise ValueError("Каждая точка - пара [долгота, широта]")
+                lon, lat = point
+                if not (-180 <= lon <= 180) or not (-90 <= lat <= 90):
+                    raise ValueError("Координаты вне допустимого диапазона")
+        return v
+
+
+class DistrictUpdate(BaseModel):
+    """Частичное обновление района: имя, границы и/или цвет."""
+    name: str | None = Field(None, min_length=2, max_length=100)
+    polygon: list[list[list[float]]] | None = None
+    color_hex: str | None = None
+
+    @field_validator("polygon")
+    @classmethod
+    def validate_polygon(cls, v):
+        if v is None:
+            return v
+        return DistrictCreate.validate_polygon(v)
