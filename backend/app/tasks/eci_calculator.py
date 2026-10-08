@@ -13,11 +13,8 @@ from app.database import utcnow
 from app.models.core import District
 from app.models.feedback import Report
 from app.models.sensors import EcoIndexHistory, Sensor, SensorMeasurement
+from app.repositories.district_repository import PM25_METRICS, PH_METRICS
 from app.services.eci import compute_eci
-
-# Варианты написания метрик в замерах (исторически разные)
-PM25_METRICS = ("pm25", "pm2.5")
-PH_METRICS = ("ph",)
 
 
 async def _avg_measurement(db: AsyncSession, district_id: int, metrics: tuple, since, until=None) -> float | None:
@@ -48,11 +45,9 @@ async def recalculate_all_districts(db: AsyncSession) -> list[dict]:
 
     summary = []
     for district in districts:
-        # 1. Среднее PM2.5 и pH за текущее окно
         avg_pm25 = await _avg_measurement(db, district.id, PM25_METRICS, since)
         avg_ph = await _avg_measurement(db, district.id, PH_METRICS, since)
 
-        # 2. Trend: среднее PM2.5 предыдущего окна минус текущего (падение загрязнения = плюс)
         prev_pm25 = await _avg_measurement(
             db, district.id, PM25_METRICS, prev_since, until=since
         )
@@ -61,7 +56,6 @@ async def recalculate_all_districts(db: AsyncSession) -> list[dict]:
         else:
             trend = 0.0
 
-        # 3. Число нерешенных жалоб района
         complaints_result = await db.execute(
             select(func.count(Report.id)).where(
                 Report.district_id == district.id,
@@ -70,7 +64,6 @@ async def recalculate_all_districts(db: AsyncSession) -> list[dict]:
         )
         complaints = complaints_result.scalar() or 0
 
-        # 4. Итоговый балл и цвет (при отсутствии данных - нейтральные значения)
         score, color = compute_eci(
             air=avg_pm25 if avg_pm25 is not None else 10.0,
             water=avg_ph if avg_ph is not None else 7.5,
