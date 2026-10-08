@@ -1,8 +1,10 @@
 # backend/app/routers/auth.py
+# backend/app/routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import IntegrityError 
 
 from app.database import get_db
 from app.models.users import User
@@ -15,29 +17,43 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """Регистрация нового пользователя в роли Жителя (resident)."""
-    # Проверяем, существует ли пользователь с таким email
-    result = await db.execute(select(User).where(User.email == user_data.email))
-    existing_user = result.scalars().first()
-    if existing_user:
+    try:
+        # Проверяем, существует ли пользователь с таким email
+        result = await db.execute(select(User).where(User.email == user_data.email))
+        existing_user = result.scalars().first()
+        if existing_user:
+            # Важно сделать rollback, чтобы сбросить состояние транзакции asyncpg
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким email уже зарегистрирован в системе"
+            )
+
+        # Создаем нового жителя с захэшированным паролем
+        new_user = User(
+            email=user_data.email,
+            hashed_password=hash_password(user_data.password),
+            role="resident",
+            is_active=True
+        )
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+
+    except (IntegrityError, HTTPException) as e:
+        # Если поймали ошибку базы данных или наше исключение — принудительно очищаем транзакцию
+        await db.rollback()
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Пользователь с таким email уже зарегистрирован в системе"
         )
 
-    # Создаем нового жителя с захэшированным паролем
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hash_password(user_data.password),
-        role="resident",
-        is_active=True
-    )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-
     # Генерируем токен автоматического входа после успешной регистрации
     access_token = create_access_token(data={"sub": new_user.email, "role": new_user.role})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/login", response_model=Token)
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
