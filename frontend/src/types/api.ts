@@ -89,11 +89,16 @@ export interface CurrentUser {
 }
 
 // /analytics/dashboard
+export interface AreaInfo {
+  name: string | null;
+  score: number | null;
+}
+
 export interface Dashboard {
   active_incidents_count: number;
   total_citizen_reports_count: number;
-  cleanest_area: { name: string; score: number };
-  critical_area: { name: string; score: number };
+  cleanest_area: AreaInfo;
+  critical_area: AreaInfo;
 }
 
 // /maps/districts/{id}/history (патч F1 — добавим на бэке)
