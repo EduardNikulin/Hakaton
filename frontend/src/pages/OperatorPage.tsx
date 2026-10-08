@@ -3,6 +3,7 @@ import { fetchIncidents } from '../api/incidents';
 import { fetchDistricts } from '../api/maps';
 import { IncidentCard } from '../components/operator/IncidentCard';
 import type { Incident, District } from '../types/api';
+import { normalizeIncidentStatus } from '../utils/status';
 
 type Filter = 'ALL' | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
 
@@ -35,16 +36,18 @@ export function OperatorPage() {
   );
 
   const visible = useMemo(
-    () => (filter === 'ALL' ? incidents : incidents.filter((i) => i.status === filter)),
+    () => (filter === 'ALL'
+      ? incidents
+      : incidents.filter((i) => normalizeIncidentStatus(i.status) === filter)),
     [incidents, filter],
   );
 
   // Счётчики по табам
   const counts = useMemo(() => ({
     ALL: incidents.length,
-    OPEN: incidents.filter((i) => i.status === 'OPEN').length,
-    IN_PROGRESS: incidents.filter((i) => i.status === 'IN_PROGRESS').length,
-    RESOLVED: incidents.filter((i) => i.status === 'RESOLVED').length,
+    OPEN: incidents.filter((i) => normalizeIncidentStatus(i.status) === 'OPEN').length,
+    IN_PROGRESS: incidents.filter((i) => normalizeIncidentStatus(i.status) === 'IN_PROGRESS').length,
+    RESOLVED: incidents.filter((i) => normalizeIncidentStatus(i.status) === 'RESOLVED').length,
   }), [incidents]) as Record<Filter, number>;
 
   return (

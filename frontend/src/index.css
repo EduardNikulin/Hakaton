@@ -3,8 +3,9 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: #f8fafc;
-  color: #111827;
+  background: #0f172a;
+  /* тёмная тема, как в Layout.module.css */
+  color: #f1f5f9;
 }
 
 /* Анимация появления боковой панели */
@@ -15,6 +16,6 @@ body {
 
 /* Аккуратный скроллбар */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #334155; }
 
 button:hover { filter: brightness(0.95); }

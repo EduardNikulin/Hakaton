@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import type { Incident } from '../../types/api';
+import { normalizeIncidentStatus, INCIDENT_STATUS_META } from '../../utils/status';
 
-const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  OPEN: { label: 'Открыт', color: '#f87171', bg: '#7f1d1d' },
-  IN_PROGRESS: { label: 'В работе', color: '#fbbf24', bg: '#78350f' },
-  RESOLVED: { label: 'Решён', color: '#34d399', bg: '#064e3b' },
-};
+// === LEGACY: статический маппинг без CRITICAL/WARNING ===
+// const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
+//   OPEN: { label: 'Открыт', color: '#f87171', bg: '#7f1d1d' },
+//   IN_PROGRESS: { label: 'В работе', color: '#fbbf24', bg: '#78350f' },
+//   RESOLVED: { label: 'Решён', color: '#34d399', bg: '#064e3b' },
+// };
 
 interface Props {
   incident: Incident;
@@ -13,10 +15,9 @@ interface Props {
 }
 
 export function IncidentCard({ incident, districtName }: Props) {
-  const meta = STATUS_META[incident.status] ?? {
-    label: incident.status, color: '#94a3b8', bg: '#1e293b',
-  };
-  const confidence = Math.round(incident.confidence_rate * 100);
+  const meta = INCIDENT_STATUS_META[normalizeIncidentStatus(incident.status)];
+  // Бэк отдаёт confidence_rate в шкале 0..100 — НЕ умножаем на 100
+  const confidence = Math.round(incident.confidence_rate);
 
   return (
     <Link to={`/incidents/${incident.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>

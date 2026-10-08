@@ -76,7 +76,7 @@ export function IncidentDetailPage() {
         <div style={{ background: '#1e293b', borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
             <Badge label={`Статус: ${incident.status}`} />
-            <Badge label={`Достоверность: ${Math.round(incident.confidence_rate * 100)}%`} />
+            <Badge label={`Достоверность: ${Math.round(incident.confidence_rate)}%`} />
           </div>
 
           <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 12 }}>
