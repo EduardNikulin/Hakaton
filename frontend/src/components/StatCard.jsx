@@ -1,9 +1,10 @@
 export default function StatCard({ icon, label, value, color = '#3b82f6' }) {
   return (
     <div style={{
-      background: '#fff', borderRadius: 16, padding: '20px 24px',
-      boxShadow: '0 1px 3px rgba(0,0,0,.08)',
+      background: 'var(--bg-card)', borderRadius: 16, padding: '20px 24px',
+      boxShadow: '0 1px 3px var(--shadow)',
       display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 200,
+      transition: 'background .3s',
     }}>
       <div style={{
         width: 48, height: 48, borderRadius: 12,
@@ -14,8 +15,8 @@ export default function StatCard({ icon, label, value, color = '#3b82f6' }) {
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 13, color: '#6b7280' }}>{label}</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{value}</div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
       </div>
     </div>
   );

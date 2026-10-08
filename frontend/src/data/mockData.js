@@ -107,3 +107,89 @@ export const incidents = [
     createdAt: '2026-10-07T18:00:00',
   },
 ];
+
+
+export const surveys = [
+  {
+    id: 1,
+    title: 'Качество воздуха в вашем районе',
+    description: 'Оцените, как вы чувствуете качество воздуха в повседневной жизни',
+    districtId: 'central',
+    status: 'active',
+    responses: 142,
+    targetResponses: 500,
+    createdAt: '2025-01-15',
+    questions: [
+      {
+        id: 'q1',
+        text: 'Как часто вы замечаете неприятные запахи на улице?',
+        type: 'radio',
+        options: ['Никогда', 'Редко', 'Иногда', 'Часто', 'Постоянно'],
+      },
+      {
+        id: 'q2',
+        text: 'Замечали ли вы ухудшение самочувствия в дни с высоким загрязнением?',
+        type: 'radio',
+        options: ['Да', 'Нет', 'Не уверен(а)'],
+      },
+      {
+        id: 'q3',
+        text: 'Ваши предложения по улучшению качества воздуха',
+        type: 'text',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Состояние водоёмов Южного района',
+    description: 'Помогите оценить экологическое состояние рек и прудов',
+    districtId: 'south',
+    status: 'active',
+    responses: 87,
+    targetResponses: 300,
+    createdAt: '2025-02-01',
+    questions: [
+      {
+        id: 'q4',
+        text: 'Как вы оцениваете чистоту ближайшего водоёма?',
+        type: 'radio',
+        options: ['Очень чистый', 'Чистый', 'Умеренно загрязнён', 'Грязный', 'Очень грязный'],
+      },
+      {
+        id: 'q5',
+        text: 'Замечали ли вы мёртвую рыбу или необычный цвет воды?',
+        type: 'radio',
+        options: ['Да, регулярно', 'Иногда', 'Один раз', 'Никогда'],
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: 'Озеленение Западного района',
+    description: 'Опрос о достаточности зелёных насаждений',
+    districtId: 'west',
+    status: 'completed',
+    responses: 310,
+    targetResponses: 300,
+    createdAt: '2024-11-10',
+    questions: [
+      {
+        id: 'q6',
+        text: 'Достаточно ли парков и скверов в вашем районе?',
+        type: 'radio',
+        options: ['Да, вполне', 'Скорее да', 'Скорее нет', 'Категорически нет'],
+      },
+    ],
+  },
+];
+// Текущий пользователь
+export const user = {
+  id: 'u1',
+  name: 'Алексей Экологичный',
+  email: 'alexey@ecocity.ru',
+  avatar: null, // можно добавить URL аватара
+  role: 'moderator', // user | moderator | admin
+  joinedAt: '2024-06-15',
+  mySurveys: [1], // ID опросов, которые создал пользователь
+  myResponses: [2, 3], // ID опросов, в которых участвовал
+};
