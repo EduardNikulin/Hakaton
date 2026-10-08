@@ -1,5 +1,6 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { normalizeRole } from '../utils/roles';
 import type { ReactNode } from 'react';
 
 interface Props {
@@ -20,12 +21,22 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && user) {
-    const hasRole = allowedRoles.includes(user.role?.toLowerCase() ?? '');
+  if (allowedRoles && allowedRoles.length > 0) {
+    const current = normalizeRole(user?.role);
+    const hasRole = allowedRoles.some((r) => normalizeRole(r) === current);
     if (!hasRole) {
       return (
-        <div style={{ color: '#ef4444', padding: 40 }}>
-          ⛔ Доступ запрещён. Требуемая роль: {allowedRoles.join(' / ')}
+        <div style={{ maxWidth: 520, margin: '60px auto', padding: 32, background: '#1e293b',
+          borderRadius: 16, color: '#f1f5f9', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>⛔</div>
+          <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>Доступ запрещён</h2>
+          <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 20 }}>
+            Для этой страницы нужна роль: {allowedRoles.join(' / ')}.<br />
+            Ваша роль: {user?.role ?? '—'}.
+          </p>
+          <Link to="/" style={{ color: '#22c55e', fontSize: 14, textDecoration: 'none' }}>
+            ← Вернуться на карту
+          </Link>
         </div>
       );
     }

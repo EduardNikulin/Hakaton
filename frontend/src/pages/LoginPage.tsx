@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
@@ -85,12 +85,12 @@ export function LoginPage() {
         </button>
       </form>
 
-      <button
-        onClick={() => { setIsRegister(!isRegister); setError(''); }}
-        style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+      <Link
+        to="/register"
+        style={{ display: 'block', textAlign: 'center', padding: 10, color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}
       >
-        {isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'}
-      </button>
+        Нет аккаунта? Зарегистрироваться
+      </Link>
     </div>
   );
 }
