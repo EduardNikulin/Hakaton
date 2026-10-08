@@ -21,7 +21,7 @@ class TokenData(BaseModel):
 class UserOut(BaseModel):
     """Профиль пользователя в ответе API."""
     id: int
-    email: EmailStr
+    email: str  # не EmailStr: в БД есть служебные адреса (например admin@ecocity.local)
     role: str
     is_active: bool
     full_name: str | None = None
