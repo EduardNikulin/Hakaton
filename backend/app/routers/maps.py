@@ -3,6 +3,7 @@
 URL-ы сохранены: /api/v1/maps/districts"""
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.database import get_db
 from app.dependencies import RoleChecker

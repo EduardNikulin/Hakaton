@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { to: '/incidents', label: 'Инциденты' },
   { to: '/analytics', label: 'Аналитика' },
   { to: '/surveys', label: 'Опросы' },
+  { to: '/reports/my', label: 'Мои жалобы' },
 ];
 
 export function Header() {

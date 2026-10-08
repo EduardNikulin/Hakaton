@@ -16,12 +16,17 @@ const LABELS: Record<keyof EciStats, string> = {
 
 export function DistrictPanel({ district, onClose }: Props) {
   const [stats, setStats] = useState<EciStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
 
   useEffect(() => {
     let alive = true;
+    setStatsLoading(true);
+    setStatsError(false);
     fetchDistrictStats(district.id)
       .then((s) => { if (alive) setStats(s); })
-      .catch(() => { if (alive) setStats(null); });
+      .catch(() => { if (alive) { setStats(null); setStatsError(true); } })
+      .finally(() => { if (alive) setStatsLoading(false); });
     return () => { alive = false; };
   }, [district.id]);
 
@@ -33,15 +38,23 @@ export function DistrictPanel({ district, onClose }: Props) {
           borderRadius: 8, width: 28, height: 28, cursor: 'pointer' }}>✕</button>
       </div>
 
-      {/* Главный ECI — цвет с бэка */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <span style={{ width: 16, height: 16, borderRadius: 4, background: district.color_hex }} />
         <span style={{ fontSize: 28, fontWeight: 800 }}>{district.eci_score}</span>
         <span style={{ color: '#94a3b8', fontSize: 13 }}>ECI (выше = чище)</span>
       </div>
 
-      {/* Компоненты индекса */}
-      {stats ? (
+      <h3 style={{ fontSize: 14, color: '#94a3b8', margin: '0 0 10px' }}>Компоненты индекса</h3>
+
+      {statsLoading && <div style={{ color: '#64748b', fontSize: 13 }}>Загрузка…</div>}
+
+      {statsError && !statsLoading && (
+        <div style={{ color: '#f87171', fontSize: 13 }}>
+          Не удалось загрузить компоненты индекса
+        </div>
+      )}
+
+      {stats && !statsLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {(Object.keys(LABELS) as (keyof EciStats)[]).map((key) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -54,8 +67,6 @@ export function DistrictPanel({ district, onClose }: Props) {
             </div>
           ))}
         </div>
-      ) : (
-        <div style={{ color: '#64748b', fontSize: 13 }}>Компоненты индекса…</div>
       )}
     </aside>
   );
