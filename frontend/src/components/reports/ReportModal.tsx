@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reportsApi, ApiError } from '../../api';
+import type { Report } from '../../types/api';
 
 const CATEGORIES = ['Запах', 'Мусор', 'Сливы', 'Шум', 'Другое'];
 
 interface Props {
   point: { lat: number; lon: number };
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (created: Report) => void;
 }
 
 export function ReportModal({ point, onClose, onCreated }: Props) {
@@ -25,12 +26,12 @@ export function ReportModal({ point, onClose, onCreated }: Props) {
     setError('');
     setLoading(true);
     try {
-      await reportsApi.createReport({
+      const created = await reportsApi.createReport({
         category,
         description: text.trim(),
         location: [point.lat, point.lon],
       });
-      onCreated();
+      onCreated(created);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         setError('Нужно войти, чтобы отправить жалобу');

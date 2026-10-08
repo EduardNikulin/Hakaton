@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { reportsApi } from '../api';
 import type { Report } from '../types/api';
+import { Link } from 'react-router-dom';
 
 const STATUS_LABEL: Record<string, string> = {
   NEW: 'Новая', IN_PROGRESS: 'В работе', RESOLVED: 'Решена',
@@ -18,7 +19,9 @@ export function MyReportsPage() {
 
   const load = () => {
     reportsApi.fetchMyReports()
-      .then(setReports)
+      .then((data) => setReports([...data].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )))
       .catch((e) => setError(e instanceof Error ? e.message : 'Ошибка'))
       .finally(() => setLoading(false));
   };
@@ -39,7 +42,12 @@ export function MyReportsPage() {
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
-      <h2 style={{ color: '#f1f5f9', marginBottom: 20 }}>Мои жалобы</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ color: '#f1f5f9', margin: 0 }}>Мои жалобы</h2>
+        <Link to="/" style={{ color: '#22c55e', fontSize: 14, textDecoration: 'none' }}>
+          ← На карту
+        </Link>
+      </div>
       {error && <div style={{ color: '#ef4444', marginBottom: 16 }}>{error}</div>}
       {reports.length === 0 && (
         <div style={{ color: '#64748b', padding: 40, textAlign: 'center' }}>

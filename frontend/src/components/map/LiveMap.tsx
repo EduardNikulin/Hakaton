@@ -20,10 +20,12 @@ interface LiveMapProps {
   onMapPick: (point: { lat: number; lon: number }) => void;
   pendingPoint: { lat: number; lon: number } | null;
   refreshKey: number;
+  // ДОБАВЛЕНО (Этап 5): жалобы, добавленные оптимистично (до рефетча)
+  extraReports?: Report[];
 }
 
 export function LiveMap({
-  onSelect, selectedId, reportMode, onMapPick, pendingPoint, refreshKey,
+  onSelect, selectedId, reportMode, onMapPick, pendingPoint, refreshKey, extraReports = [],
 }: LiveMapProps) {
   const [districts, setDistricts] = useState<District[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -101,6 +103,16 @@ export function LiveMap({
     [districts],
   );
 
+  // ДОБАВЛЕНО (Этап 5): объединяем серверные и оптимистичные жалобы без дублей.
+  // ВАЖНО: здесь НЕ используем JS Map — имя "Map" занято компонентом карты
+  // из @pbe/react-yandex-maps, поэтому дедупликация через обычный объект.
+  const allReports = useMemo<Report[]>(() => {
+    const byId: Record<number, Report> = {};
+    reports.forEach((r) => { byId[r.id] = r; });
+    extraReports.forEach((r) => { byId[r.id] = r; });
+    return Object.values(byId);
+  }, [reports, extraReports]);
+
   const pickFromEvent = (e: MapEvent) => {
     const coords = e.get('coords') as [number, number] | undefined;
     if (coords) onMapPick({ lat: coords[0], lon: coords[1] });
@@ -163,7 +175,7 @@ export function LiveMap({
             districtNames={districtNames}
           />
 
-          <ReportMarkers reports={reports} reportMode={reportMode} onPick={onMapPick} />
+          <ReportMarkers reports={allReports} reportMode={reportMode} onPick={onMapPick} />
 
           {pendingPoint && (
             <Placemark

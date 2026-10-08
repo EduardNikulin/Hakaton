@@ -43,7 +43,16 @@ async function request<T>(
     let detail = res.statusText;
     try {
       const body = await res.json();
-      detail = body.detail ?? detail;
+      const raw = body?.detail;
+      if (typeof raw === 'string') {
+        detail = raw;
+      } else if (Array.isArray(raw)) {
+        // Ошибки валидации FastAPI/Pydantic: массив {loc, msg, type}
+        detail = raw
+          .map((e: { msg?: string }) => e?.msg ?? '')
+          .filter(Boolean)
+          .join('; ') || detail;
+      }
     } catch { /* не JSON */ }
     throw new ApiError(res.status, detail);
   }

@@ -4,13 +4,14 @@ import { DistrictPanel } from '../components/district/DistrictPanel';
 import { ReportModal } from '../components/reports/ReportModal';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import type { District } from '../types/api';
+import type { District, Report } from '../types/api';
 
 export function DashboardPage() {
   const [selected, setSelected] = useState<District | null>(null);
   const [reportMode, setReportMode] = useState(false);
   const [pendingPoint, setPendingPoint] = useState<{ lat: number; lon: number } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [optimisticReports, setOptimisticReports] = useState<Report[]>([]);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -51,6 +52,7 @@ export function DashboardPage() {
             onMapPick={setPendingPoint}
             pendingPoint={pendingPoint}
             refreshKey={refreshKey}
+            extraReports={optimisticReports}
           />
         </div>
 
@@ -79,7 +81,11 @@ export function DashboardPage() {
         <ReportModal
           point={pendingPoint}
           onClose={() => { setPendingPoint(null); setReportMode(false); }}
-          onCreated={() => {
+          onCreated={(created) => {
+            // Оптимистично добавляем маркер и запускаем рефетч (маркер не пропадёт)
+            setOptimisticReports((prev) =>
+              prev.some((r) => r.id === created.id) ? prev : [...prev, created],
+            );
             setPendingPoint(null);
             setReportMode(false);
             setRefreshKey((k) => k + 1);
