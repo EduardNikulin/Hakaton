@@ -55,8 +55,6 @@ from app.utils.security import hash_password
 
 CITY_NAME = "Калуга"
 
-# Пароли предназначены ТОЛЬКО для локального демо/хакатона.
-# В production такие значения использовать нельзя.
 SEED_PASSWORDS = {
     "resident": "Resident123!",
     "author": "Author123!",
@@ -67,29 +65,12 @@ SEED_PASSWORDS = {
 # ---------------------------------------------------------------------------
 # Геометрии
 # ---------------------------------------------------------------------------
-#
-# Калуга:
-# приблизительный центр:
-#   latitude  = 54.5293
-#   longitude = 36.2754
-#
-# Координаты в WKT идут как:
-#   POINT(longitude latitude)
-#
-# Для POLYGON:
-#   POLYGON((lon lat, lon lat, ...))
-#
-# Геометрии сделаны непересекающимися и покрывают основную городскую
-# территорию для демонстрации ST_Contains.
-#
-# Это DEMO-полигоны, а не официальные границы округов.
-# ---------------------------------------------------------------------------
 
 DISTRICTS = [
     {
         "name": "Ленинский округ",
-        "eci_score": 72.5,
-        "color_hex": "#22c55e",
+        "eci_score": 22.0,
+        "color_hex": "#34d399",
         "polygon": (
             "POLYGON(("
             "36.2450 54.5450, "
@@ -105,8 +86,8 @@ DISTRICTS = [
     },
     {
         "name": "Московский округ",
-        "eci_score": 61.0,
-        "color_hex": "#f59e0b",
+        "eci_score": 55.0,
+        "color_hex": "#fbbf24",
         "polygon": (
             "POLYGON(("
             "36.2050 54.5650, "
@@ -121,7 +102,7 @@ DISTRICTS = [
     },
     {
         "name": "Октябрьский округ",
-        "eci_score": 48.5,
+        "eci_score": 88.0,
         "color_hex": "#ef4444",
         "polygon": (
             "POLYGON(("
@@ -143,125 +124,86 @@ DISTRICTS = [
 # ---------------------------------------------------------------------------
 
 USERS = [
-    {
-        "email": "resident@ecocity.local",
-        "password": SEED_PASSWORDS["resident"],
-        "role": "resident",
-    },
-    {
-        "email": "author@ecocity.local",
-        "password": SEED_PASSWORDS["author"],
-        "role": "author",
-    },
-    {
-        "email": "admin@ecocity.local",
-        "password": SEED_PASSWORDS["admin"],
-        "role": "admin",
-    },
+    {"email": "resident@ecocity.local", "password": SEED_PASSWORDS["resident"], "role": "resident"},
+    {"email": "author@ecocity.local",   "password": SEED_PASSWORDS["author"],   "role": "author"},
+    {"email": "admin@ecocity.local",    "password": SEED_PASSWORDS["admin"],    "role": "admin"},
 ]
 
 
 # ---------------------------------------------------------------------------
 # Датчики
 # ---------------------------------------------------------------------------
-#
-# Координаты расположены в разных частях Калуги и используются
-# исключительно как демонстрационные точки городской сенсорной сети.
-# ---------------------------------------------------------------------------
 
 SENSORS = [
-    {
-        "name": "AIR-001 Центр",
-        "sensor_type": "air",
-        "lat": 54.5293,
-        "lon": 36.2754,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-002 Московская",
-        "sensor_type": "air",
-        "lat": 54.5468,
-        "lon": 36.2462,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-003 Грабцевское",
-        "sensor_type": "air",
-        "lat": 54.5255,
-        "lon": 36.3160,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-004 Правый берег",
-        "sensor_type": "air",
-        "lat": 54.5348,
-        "lon": 36.3032,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-005 Северный",
-        "sensor_type": "air",
-        "lat": 54.5542,
-        "lon": 36.2285,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-006 Терепец",
-        "sensor_type": "air",
-        "lat": 54.5110,
-        "lon": 36.2505,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "AIR-007 Анненки",
-        "sensor_type": "air",
-        "lat": 54.5138,
-        "lon": 36.2915,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "WATER-001 Ока Центр",
-        "sensor_type": "water",
-        "lat": 54.5160,
-        "lon": 36.2710,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "WATER-002 Ока Восток",
-        "sensor_type": "water",
-        "lat": 54.5100,
-        "lon": 36.3150,
-        "status": "ACTIVE",
-    },
-    {
-        "name": "WATER-003 Ока Запад",
-        "sensor_type": "water",
-        "lat": 54.5220,
-        "lon": 36.2350,
-        "status": "ACTIVE",
-    },
+    {"name": "AIR-001 Центр",         "sensor_type": "air",   "lat": 54.5293, "lon": 36.2754, "status": "ACTIVE"},
+    {"name": "AIR-002 Московская",    "sensor_type": "air",   "lat": 54.5468, "lon": 36.2462, "status": "ACTIVE"},
+    {"name": "AIR-003 Грабцевское",   "sensor_type": "air",   "lat": 54.5255, "lon": 36.3160, "status": "ACTIVE"},
+    {"name": "AIR-004 Правый берег",  "sensor_type": "air",   "lat": 54.5348, "lon": 36.3032, "status": "ACTIVE"},
+    {"name": "AIR-005 Северный",      "sensor_type": "air",   "lat": 54.5542, "lon": 36.2285, "status": "ACTIVE"},
+    {"name": "AIR-006 Терепец",       "sensor_type": "air",   "lat": 54.5110, "lon": 36.2505, "status": "ACTIVE"},
+    {"name": "AIR-007 Анненки",       "sensor_type": "air",   "lat": 54.5138, "lon": 36.2915, "status": "ACTIVE"},
+    {"name": "WATER-001 Ока Центр",   "sensor_type": "water", "lat": 54.5160, "lon": 36.2710, "status": "ACTIVE"},
+    {"name": "WATER-002 Ока Восток",  "sensor_type": "water", "lat": 54.5100, "lon": 36.3150, "status": "ACTIVE"},
+    {"name": "WATER-003 Ока Запад",   "sensor_type": "water", "lat": 54.5220, "lon": 36.2350, "status": "ACTIVE"},
 ]
 
 
 # ---------------------------------------------------------------------------
-# Демонстрационные измерения
+# Измерения — У КАЖДОГО ДАТЧИКА СВОИ ЗНАЧЕНИЯ
+# ---------------------------------------------------------------------------
+#
+# Логика:
+#   - Ленинский округ → чистый воздух (PM2.5 = 8-9)
+#   - Московский округ → средний (PM2.5 = 22-26)
+#   - Октябрьский округ → грязный (PM2.5 = 78-95)
+#
+# Это даёт разный ECI у районов и разные цвета полигонов.
 # ---------------------------------------------------------------------------
 
-AIR_MEASUREMENTS = [
-    ("pm25", 18.4),
-    ("pm10", 31.7),
-    ("no2", 24.2),
-    ("co", 0.42),
-    ("temperature", 11.8),
-    ("humidity", 67.0),
-    ("noise", 54.0),
-]
+SENSOR_MEASUREMENTS = {
+    # ── Ленинский округ (чисто) ──
+    "AIR-001 Центр": [
+        ("pm25", 8.5), ("pm10", 14.2), ("no2", 12.0), ("co", 0.30),
+        ("temperature", 12.0), ("humidity", 65.0), ("noise", 48.0),
+    ],
+    "AIR-006 Терепец": [
+        ("pm25", 9.1), ("pm10", 15.0), ("no2", 11.5), ("co", 0.28),
+        ("temperature", 12.5), ("humidity", 63.0), ("noise", 45.0),
+    ],
+    "AIR-007 Анненки": [
+        ("pm25", 7.8), ("pm10", 13.5), ("no2", 10.2), ("co", 0.25),
+        ("temperature", 11.5), ("humidity", 66.0), ("noise", 47.0),
+    ],
+    "WATER-003 Ока Запад": [
+        ("temperature", 10.2), ("ph", 7.5), ("turbidity", 1.8),
+    ],
 
-WATER_MEASUREMENTS = [
-    ("temperature", 10.7),
-    ("ph", 7.3),
-    ("turbidity", 2.4),
-]
+    # ── Московский округ (средне) ──
+    "AIR-002 Московская": [
+        ("pm25", 22.0), ("pm10", 38.0), ("no2", 28.0), ("co", 0.50),
+        ("temperature", 13.0), ("humidity", 70.0), ("noise", 58.0),
+    ],
+    "AIR-005 Северный": [
+        ("pm25", 25.4), ("pm10", 42.1), ("no2", 30.5), ("co", 0.55),
+        ("temperature", 13.5), ("humidity", 68.0), ("noise", 60.0),
+    ],
+
+    # ── Октябрьский округ (грязно) ──
+    "AIR-003 Грабцевское": [
+        ("pm25", 78.2), ("pm10", 120.5), ("no2", 65.0), ("co", 1.20),
+        ("temperature", 14.0), ("humidity", 72.0), ("noise", 75.0),
+    ],
+    "AIR-004 Правый берег": [
+        ("pm25", 92.5), ("pm10", 145.0), ("no2", 72.0), ("co", 1.50),
+        ("temperature", 14.5), ("humidity", 73.0), ("noise", 78.0),
+    ],
+    "WATER-001 Ока Центр": [
+        ("temperature", 10.5), ("ph", 6.4), ("turbidity", 5.2),
+    ],
+    "WATER-002 Ока Восток": [
+        ("temperature", 10.8), ("ph", 6.1), ("turbidity", 6.0),
+    ],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -269,61 +211,34 @@ WATER_MEASUREMENTS = [
 # ---------------------------------------------------------------------------
 
 def point_wkt(lat: float, lon: float) -> WKTElement:
-    """Создаёт POINT с SRID 4326.
-
-    GeoAlchemy/PostGIS ожидает:
-        POINT(longitude latitude)
-    """
-    return WKTElement(
-        f"POINT({lon} {lat})",
-        srid=4326,
-    )
+    return WKTElement(f"POINT({lon} {lat})", srid=4326)
 
 
 def polygon_wkt(value: str) -> WKTElement:
-    """Создаёт POLYGON с SRID 4326."""
     return WKTElement(value, srid=4326)
 
 
-async def get_or_create_city(
-    db: AsyncSession,
-) -> City:
-    result = await db.execute(
-        select(City).where(City.name == CITY_NAME)
-    )
+async def get_or_create_city(db: AsyncSession) -> City:
+    result = await db.execute(select(City).where(City.name == CITY_NAME))
     city = result.scalar_one_or_none()
-
     if city:
         print(f"[OK] Город уже существует: {city.name}")
         return city
-
     city = City(name=CITY_NAME)
     db.add(city)
-
     await db.flush()
-
     print(f"[+] Создан город: {city.name}")
-
     return city
 
 
-async def get_or_create_district(
-    db: AsyncSession,
-    city: City,
-    data: dict,
-) -> District:
+async def get_or_create_district(db: AsyncSession, city: City, data: dict) -> District:
     result = await db.execute(
-        select(District).where(
-            District.city_id == city.id,
-            District.name == data["name"],
-        )
+        select(District).where(District.city_id == city.id, District.name == data["name"])
     )
     district = result.scalar_one_or_none()
-
     if district:
         print(f"[OK] Округ уже существует: {district.name}")
         return district
-
     district = District(
         city_id=city.id,
         name=data["name"],
@@ -331,236 +246,125 @@ async def get_or_create_district(
         eci_score=data["eci_score"],
         color_hex=data["color_hex"],
     )
-
     db.add(district)
-
     await db.flush()
-
-    print(f"[+] Создан округ: {district.name}")
-
+    print(f"[+] Создан округ: {district.name} (ECI {data['eci_score']})")
     return district
 
 
-async def get_or_create_user(
-    db: AsyncSession,
-    data: dict,
-) -> User:
-    result = await db.execute(
-        select(User).where(User.email == data["email"])
-    )
+async def get_or_create_user(db: AsyncSession, data: dict) -> User:
+    result = await db.execute(select(User).where(User.email == data["email"]))
     user = result.scalar_one_or_none()
-
     if user:
-        print(
-            f"[OK] Пользователь уже существует: "
-            f"{user.email} ({user.role})"
-        )
+        print(f"[OK] Пользователь уже существует: {user.email} ({user.role})")
         return user
-
     user = User(
         email=data["email"],
         hashed_password=hash_password(data["password"]),
         role=data["role"],
         is_active=True,
     )
-
     db.add(user)
-
     await db.flush()
-
-    print(
-        f"[+] Создан пользователь: "
-        f"{user.email} ({user.role})"
-    )
-
+    print(f"[+] Создан пользователь: {user.email} ({user.role})")
     return user
 
 
-async def get_or_create_sensor(
-    db: AsyncSession,
-    data: dict,
-    districts: list[District],
-) -> Sensor:
-    result = await db.execute(
-        select(Sensor).where(
-            Sensor.name == data["name"]
-        )
-    )
-    sensor = result.scalar_one_or_none()
-
-    if sensor:
-        print(f"[OK] Датчик уже существует: {sensor.name}")
-        return sensor
-
-    # Определяем округ через простую проверку координат.
-    # Для seed это не требует отдельного запроса ST_Contains.
-    district = find_district_for_point(
-        data["lat"],
-        data["lon"],
-        districts,
-    )
-
-    sensor = Sensor(
-        district_id=district.id if district else None,
-        name=data["name"],
-        sensor_type=data["sensor_type"],
-        location=point_wkt(
-            data["lat"],
-            data["lon"],
-        ),
-        status=data["status"],
-    )
-
-    db.add(sensor)
-
-    await db.flush()
-
-    district_name = district.name if district else "без округа"
-
-    print(
-        f"[+] Создан датчик: "
-        f"{sensor.name} → {district_name}"
-    )
-
-    return sensor
-
-
-def point_in_demo_polygon(
-    lat: float,
-    lon: float,
-    polygon: str,
-) -> bool:
-    """Простейшая проверка для наших прямоугольных demo-полигонов.
-
-    Нужна только для выбора district при seed.
-    Реальная логика приложения продолжает использовать PostGIS.
-    """
-
-    # Извлекаем координаты из WKT.
+def point_in_demo_polygon(lat: float, lon: float, polygon: str) -> bool:
     raw = polygon.removeprefix("POLYGON((").removesuffix("))")
-
     points = []
-
     for pair in raw.split(","):
         x, y = pair.strip().split()
         points.append((float(x), float(y)))
-
     min_lon = min(x for x, _ in points)
     max_lon = max(x for x, _ in points)
     min_lat = min(y for _, y in points)
     max_lat = max(y for _, y in points)
-
-    return (
-        min_lon <= lon <= max_lon
-        and min_lat <= lat <= max_lat
-    )
+    return min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
 
 
-def find_district_for_point(
-    lat: float,
-    lon: float,
-    districts: list[District],
-) -> District | None:
-    """Находит demo-округ по координатам."""
-
+def find_district_for_point(lat: float, lon: float, districts: list[District]) -> District | None:
     for district, data in zip(districts, DISTRICTS):
-        if point_in_demo_polygon(
-            lat,
-            lon,
-            data["polygon"],
-        ):
+        if point_in_demo_polygon(lat, lon, data["polygon"]):
             return district
-
     return None
 
 
-async def seed_measurements(
-    db: AsyncSession,
-    sensors: list[Sensor],
-) -> None:
-    """Добавляет по несколько измерений для каждого нового датчика."""
+async def get_or_create_sensor(db: AsyncSession, data: dict, districts: list[District]) -> Sensor:
+    result = await db.execute(select(Sensor).where(Sensor.name == data["name"]))
+    sensor = result.scalar_one_or_none()
+    if sensor:
+        print(f"[OK] Датчик уже существует: {sensor.name}")
+        return sensor
+    district = find_district_for_point(data["lat"], data["lon"], districts)
+    sensor = Sensor(
+        district_id=district.id if district else None,
+        name=data["name"],
+        sensor_type=data["sensor_type"],
+        location=point_wkt(data["lat"], data["lon"]),
+        status=data["status"],
+    )
+    db.add(sensor)
+    await db.flush()
+    district_name = district.name if district else "без округа"
+    print(f"[+] Создан датчик: {sensor.name} → {district_name}")
+    return sensor
 
+
+async def seed_measurements(db: AsyncSession, sensors: list[Sensor]) -> None:
+    """Добавляет измерения из SENSOR_MEASUREMENTS по имени датчика."""
     for sensor in sensors:
         result = await db.execute(
             select(SensorMeasurement)
-            .where(
-                SensorMeasurement.sensor_id == sensor.id
-            )
+            .where(SensorMeasurement.sensor_id == sensor.id)
             .limit(1)
         )
-
-        existing_measurement = result.scalar_one_or_none()
-
-        if existing_measurement:
-            print(
-                f"[OK] Измерения уже есть: "
-                f"{sensor.name}"
-            )
+        existing = result.scalar_one_or_none()
+        if existing:
+            print(f"[OK] Измерения уже есть: {sensor.name}")
             continue
 
-        if sensor.sensor_type.lower() == "water":
-            measurements = WATER_MEASUREMENTS
-        else:
-            measurements = AIR_MEASUREMENTS
+        measurements = SENSOR_MEASUREMENTS.get(sensor.name)
+        if not measurements:
+            print(f"[SKIP] Нет данных для датчика: {sensor.name}")
+            continue
 
         for metric_name, value in measurements:
-            measurement = SensorMeasurement(
+            db.add(SensorMeasurement(
                 sensor_id=sensor.id,
                 value=value,
                 metric_name=metric_name,
                 quality_status="VALID",
-            )
+            ))
 
-            db.add(measurement)
-
-        print(
-            f"[+] Добавлены измерения: "
-            f"{sensor.name} ({len(measurements)})"
-        )
+        print(f"[+] Добавлены измерения: {sensor.name} ({len(measurements)})")
 
 
 async def seed_reports(
-    db: AsyncSession,
-    resident: User,
-    author: User,
-    districts: list[District],
+    db: AsyncSession, resident: User, author: User, districts: list[District]
 ) -> list[Report]:
-    """Создаёт несколько демонстрационных жалоб."""
-
     reports_data = [
         {
             "user": resident,
             "category": "air",
-            "description": (
-                "Повышенная концентрация загрязняющих веществ "
-                "в районе автомобильной дороги."
-            ),
-            "lat": 54.5293,
-            "lon": 36.2754,
+            "description": "Повышенная концентрация загрязняющих веществ в районе автомобильной дороги.",
+            "lat": 54.5293, "lon": 36.2754,
         },
         {
             "user": resident,
             "category": "water",
-            "description": (
-                "Обнаружено изменение цвета воды в районе Оки."
-            ),
-            "lat": 54.5160,
-            "lon": 36.2710,
+            "description": "Обнаружено изменение цвета воды в районе Оки.",
+            "lat": 54.5160, "lon": 36.2710,
         },
         {
             "user": author,
             "category": "waste",
-            "description": (
-                "Несанкционированное складирование отходов "
-                "на территории городской зоны."
-            ),
-            "lat": 54.5468,
-            "lon": 36.2462,
+            "description": "Несанкционированное складирование отходов на территории городской зоны.",
+            "lat": 54.5468, "lon": 36.2462,
         },
     ]
 
-    created_reports: list[Report] = []
-
+    created: list[Report] = []
     for data in reports_data:
         result = await db.execute(
             select(Report).where(
@@ -568,47 +372,27 @@ async def seed_reports(
                 Report.description == data["description"],
             )
         )
-
         report = result.scalar_one_or_none()
-
         if report:
-            print(
-                f"[OK] Жалоба уже существует: "
-                f"{report.description[:45]}..."
-            )
-            created_reports.append(report)
+            print(f"[OK] Жалоба уже существует: {report.description[:45]}...")
+            created.append(report)
             continue
 
-        district = find_district_for_point(
-            data["lat"],
-            data["lon"],
-            districts,
-        )
-
+        district = find_district_for_point(data["lat"], data["lon"], districts)
         report = Report(
             user_id=data["user"].id,
             district_id=district.id if district else None,
             category=data["category"],
             description=data["description"],
-            location=point_wkt(
-                data["lat"],
-                data["lon"],
-            ),
+            location=point_wkt(data["lat"], data["lon"]),
             status="NEW",
         )
-
         db.add(report)
-
         await db.flush()
+        created.append(report)
+        print(f"[+] Создана жалоба: {data['category']}")
 
-        created_reports.append(report)
-
-        print(
-            f"[+] Создана жалоба: "
-            f"{data['category']}"
-        )
-
-    return created_reports
+    return created
 
 
 async def seed_incidents(
@@ -617,18 +401,13 @@ async def seed_incidents(
     reports: list[Report],
     sensors: list[Sensor],
 ) -> None:
-    """Создаёт несколько демонстрационных инцидентов."""
-
     incidents_data = [
         {
             "title": "Повышенное загрязнение воздуха",
-            "district": districts[0],
+            "district": districts[2],
             "confidence_rate": 91.5,
             "status": "CRITICAL",
-            "operator_comment": (
-                "Автоматически обнаружено по показаниям "
-                "датчиков качества воздуха."
-            ),
+            "operator_comment": "Автоматически обнаружено по показаниям датчиков качества воздуха.",
             "report": reports[0] if reports else None,
             "sensor": sensors[0] if sensors else None,
         },
@@ -637,29 +416,17 @@ async def seed_incidents(
             "district": districts[2],
             "confidence_rate": 78.0,
             "status": "WARNING",
-            "operator_comment": (
-                "Требуется дополнительная проверка "
-                "показаний водных датчиков."
-            ),
+            "operator_comment": "Требуется дополнительная проверка показаний водных датчиков.",
             "report": reports[1] if len(reports) > 1 else None,
             "sensor": sensors[7] if len(sensors) > 7 else None,
         },
     ]
 
     for data in incidents_data:
-        result = await db.execute(
-            select(Incident).where(
-                Incident.title == data["title"]
-            )
-        )
-
+        result = await db.execute(select(Incident).where(Incident.title == data["title"]))
         incident = result.scalar_one_or_none()
-
         if incident:
-            print(
-                f"[OK] Инцидент уже существует: "
-                f"{incident.title}"
-            )
+            print(f"[OK] Инцидент уже существует: {incident.title}")
             continue
 
         incident = Incident(
@@ -669,19 +436,12 @@ async def seed_incidents(
             confidence_rate=data["confidence_rate"],
             operator_comment=data["operator_comment"],
         )
-
         if data["report"] is not None:
             incident.reports.append(data["report"])
-
         if data["sensor"] is not None:
             incident.sensors.append(data["sensor"])
-
         db.add(incident)
-
-        print(
-            f"[+] Создан инцидент: "
-            f"{incident.title}"
-        )
+        print(f"[+] Создан инцидент: {incident.title}")
 
 
 # ---------------------------------------------------------------------------
@@ -693,104 +453,36 @@ async def seed() -> None:
     print("=" * 70)
     print("EcoCity — database seed")
     print("=" * 70)
-    print()
 
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=False,
-    )
-
-    session_factory = async_sessionmaker(
-        engine,
-        expire_on_commit=False,
-    )
+    engine = create_async_engine(settings.DATABASE_URL, echo=False)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as db:
         try:
-            # ---------------------------------------------------------------
-            # 1. City
-            # ---------------------------------------------------------------
-
             city = await get_or_create_city(db)
 
-            # ---------------------------------------------------------------
-            # 2. Districts
-            # ---------------------------------------------------------------
-
             districts = []
-
             for district_data in DISTRICTS:
-                district = await get_or_create_district(
-                    db,
-                    city,
-                    district_data,
-                )
-
-                districts.append(district)
-
-            # ---------------------------------------------------------------
-            # 3. Users
-            # ---------------------------------------------------------------
+                d = await get_or_create_district(db, city, district_data)
+                districts.append(d)
 
             users = {}
-
             for user_data in USERS:
-                user = await get_or_create_user(
-                    db,
-                    user_data,
-                )
-
-                users[user_data["role"]] = user
-
-            # ---------------------------------------------------------------
-            # 4. Sensors
-            # ---------------------------------------------------------------
+                u = await get_or_create_user(db, user_data)
+                users[user_data["role"]] = u
 
             sensors = []
-
             for sensor_data in SENSORS:
-                sensor = await get_or_create_sensor(
-                    db,
-                    sensor_data,
-                    districts,
-                )
+                s = await get_or_create_sensor(db, sensor_data, districts)
+                sensors.append(s)
 
-                sensors.append(sensor)
-
-            # ---------------------------------------------------------------
-            # 5. Sensor measurements
-            # ---------------------------------------------------------------
-
-            await seed_measurements(
-                db,
-                sensors,
-            )
-
-            # ---------------------------------------------------------------
-            # 6. Reports
-            # ---------------------------------------------------------------
+            await seed_measurements(db, sensors)
 
             reports = await seed_reports(
-                db,
-                resident=users["resident"],
-                author=users["author"],
-                districts=districts,
+                db, resident=users["resident"], author=users["author"], districts=districts
             )
 
-            # ---------------------------------------------------------------
-            # 7. Incidents
-            # ---------------------------------------------------------------
-
-            await seed_incidents(
-                db,
-                districts=districts,
-                reports=reports,
-                sensors=sensors,
-            )
-
-            # ---------------------------------------------------------------
-            # Commit
-            # ---------------------------------------------------------------
+            await seed_incidents(db, districts=districts, reports=reports, sensors=sensors)
 
             await db.commit()
 
@@ -798,25 +490,20 @@ async def seed() -> None:
             print("=" * 70)
             print("SEED COMPLETED SUCCESSFULLY")
             print("=" * 70)
-            print()
             print(f"City:      {city.name}")
             print(f"Districts: {len(districts)}")
             print(f"Sensors:   {len(sensors)}")
             print(f"Reports:   {len(reports)}")
             print()
             print("Demo users:")
-            print()
             print("  resident@ecocity.local / Resident123!")
             print("  author@ecocity.local   / Author123!")
             print("  admin@ecocity.local    / Admin123!")
-            print()
-            print("Не использовать эти пароли в production.")
             print()
 
         except Exception:
             await db.rollback()
             raise
-
         finally:
             await db.close()
 
