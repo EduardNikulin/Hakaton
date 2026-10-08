@@ -23,9 +23,19 @@ export function DashboardPage() {
   };
 
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 16, marginBottom: 12 }}>
-        <div style={{ position: 'relative' }}>
+    // Контейнер с maxWidth — карта центрируется и не растягивается за экран
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: selected ? 'minmax(0, 1fr) 380px' : 'minmax(0, 1fr)',
+          gap: 16,
+          marginBottom: 12,
+          alignItems: 'start',
+        }}
+      >
+        {/* minWidth: 0 — ключевой фикс горизонтального overflow */}
+        <div style={{ position: 'relative', minWidth: 0 }}>
           <button
             onClick={startReport}
             style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, padding: '10px 18px',
@@ -43,10 +53,15 @@ export function DashboardPage() {
             refreshKey={refreshKey}
           />
         </div>
-        {selected && <DistrictPanel district={selected} onClose={() => setSelected(null)} />}
+
+        {selected && (
+          <div style={{ minWidth: 0 }}>
+            <DistrictPanel district={selected} onClose={() => setSelected(null)} />
+          </div>
+        )}
       </div>
 
-      <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, color: '#94a3b8' }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', fontSize: 13, color: '#94a3b8' }}>
         <span style={{ fontWeight: 600 }}>ECI (выше = чище):</span>
         <Legend color="#22c55e" label="≥ 75 — чисто" />
         <Legend color="#f59e0b" label="≥ 50 — средне" />
@@ -64,7 +79,7 @@ export function DashboardPage() {
           onCreated={() => {
             setPendingPoint(null);
             setReportMode(false);
-            setRefreshKey((k) => k + 1); // рефетч жалоб
+            setRefreshKey((k) => k + 1);
           }}
         />
       )}

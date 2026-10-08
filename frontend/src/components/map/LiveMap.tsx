@@ -9,7 +9,6 @@ import { ReportMarkers } from './ReportMarkers';
 
 const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
 
-// Минимальный тип события Яндекс.Карт
 type MapEvent = { get: (key: string) => unknown };
 
 interface LiveMapProps {
@@ -28,6 +27,8 @@ export function LiveMap({
   const [reports, setReports] = useState<Report[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Инстанс карты — нужен для управления курсором
+  const [mapInstance, setMapInstance] = useState<any>(null);
 
   useEffect(() => {
     let alive = true;
@@ -55,13 +56,26 @@ export function LiveMap({
     return () => { alive = false; };
   }, [refreshKey]);
 
+  // Курсор на ВСЕЙ карте: crosshair в режиме жалобы, иначе grab
+    // Курсор на ВСЕЙ карте через CursorManager: push() при входе, pop() при выходе.
+  // ВАЖНО: у CursorManager нет remove(key) — только push()/pop().
+  useEffect(() => {
+    const cursors = mapInstance?.cursors;
+    if (!cursors) return;
+    if (typeof cursors.push === 'function') {
+      cursors.push(reportMode ? 'crosshair' : 'grab');
+    }
+    return () => {
+      if (typeof cursors.pop === 'function') cursors.pop();
+    };
+  }, [mapInstance, reportMode]);
+
   const center = useMemo<[number, number]>(() => {
     if (districts.length === 0) return KALUGA_CENTER;
     const all = districts.flatMap((d) => geojsonToYandex(d.polygon_geojson));
     return polygonCenter(all);
   }, [districts]);
 
-  // Достаём координаты клика из события карты/гео-объекта
   const pickFromEvent = (e: MapEvent) => {
     const coords = e.get('coords') as [number, number] | undefined;
     if (coords) onMapPick({ lat: coords[0], lon: coords[1] });
@@ -78,12 +92,13 @@ export function LiveMap({
       {reportMode && (
         <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
           zIndex: 10, background: '#22c55e', color: '#fff', padding: '8px 16px',
-          borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+          borderRadius: 10, fontSize: 13, fontWeight: 600, pointerEvents: 'none' }}>
           Нажмите на карту, где проблема
         </div>
       )}
       <YMaps query={{ apikey: YMAPS_KEY, lang: 'ru_RU' }}>
         <Map
+          instanceRef={(m) => setMapInstance(m)}
           defaultState={{ center, zoom: 12 }}
           width="100%"
           height="100%"
@@ -103,12 +118,11 @@ export function LiveMap({
                   cursor: reportMode ? 'crosshair' : 'pointer',
                 }}
                 properties={{ hintContent: `${d.name} · ECI: ${d.eci_score}` }}
-                // ГЛАВНЫЙ ФИКС: клик по району работает в обоих режимах
                 onClick={(e: MapEvent) => {
                   if (reportMode) {
-                    pickFromEvent(e);      // режим жалобы → ставим точку
+                    pickFromEvent(e);
                   } else {
-                    onSelect(d);           // обычный режим → открываем панель района
+                    onSelect(d);
                   }
                 }}
               />
@@ -117,7 +131,6 @@ export function LiveMap({
 
           <ReportMarkers reports={reports} reportMode={reportMode} onPick={onMapPick} />
 
-          {/* Точка, выбранная для жалобы — видна до отправки */}
           {pendingPoint && (
             <Placemark
               geometry={[pendingPoint.lat, pendingPoint.lon]}
