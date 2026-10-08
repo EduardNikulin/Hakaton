@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { OperatorPage } from '../pages/OperatorPage';
+import { IncidentDetailPage } from '../pages/IncidentDetailPage';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
 import { SurveyConstructor } from '../pages/SurveyConstructor';
 import { LoginPage } from '../pages/LoginPage';
@@ -37,6 +38,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <OperatorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/incidents/:id"
+        element={
+          <ProtectedRoute>
+            <IncidentDetailPage />
           </ProtectedRoute>
         }
       />

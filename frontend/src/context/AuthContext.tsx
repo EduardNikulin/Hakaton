@@ -4,6 +4,7 @@ import type { CurrentUser } from '../types/api';
 
 interface AuthContextValue {
   user: CurrentUser | null;
+  role: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -15,7 +16,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Роль берём из ответа /auth/me; если бэкенд её не отдаёт —
+  // признак админа по префиксу почты (созвучно с бэкендом, role=='admin')
+  const resolveRole = (u: CurrentUser): string =>
+    (u as unknown as { role?: string }).role
+    ?? (u.email.startsWith('admin') ? 'admin' : 'user');
 
   useEffect(() => {
     // Восстанавливаем сессию из localStorage при старте
@@ -29,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .fetchMe()
       .then((u) => {
         setUser(u);
+        setRole(resolveRole(u));
       })
       .catch(() => {
         // Токен истёк или невалиден — чистим
@@ -43,23 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.login(email, password);
     const me = await authApi.fetchMe();
     setUser(me);
+    setRole(resolveRole(me));
   };
 
   const register = async (email: string, password: string) => {
     await authApi.register(email, password);
     const me = await authApi.fetchMe();
     setUser(me);
+    setRole(resolveRole(me));
   };
 
   const logout = () => {
     authApi.logout();
     setUser(null);
+    setRole(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        role,
         isAuthenticated: !!user,
         isLoading,
         login,
