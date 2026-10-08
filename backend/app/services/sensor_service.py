@@ -62,7 +62,8 @@ class SensorService:
             )
         await self.sensors.update(sensor, name=name, status=status)
         await self.db.commit()
-        return sensor
+        # Перечитываем, чтобы column_property lat/lon были загружены (иначе MissingGreenlet)
+        return await self.sensors.get(sensor_id)
 
     async def delete_sensor(self, sensor_id: int) -> None:
         sensor = await self.sensors.get(sensor_id)
