@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/incidents', label: 'Инциденты', roles: ['resident', 'author'] },
   { to: '/operator', label: 'Оператор', roles: ['admin'] },
   { to: '/analytics', label: 'Аналитика', roles: ['author', 'admin'] },
-  { to: '/surveys', label: 'Опросы', roles: ['author', 'admin'] },
+  { to: '/surveys', label: 'Опросы', roles: ['resident', 'author', 'admin'] },
   { to: '/reports/my', label: 'Мои жалобы', roles: ['resident', 'author', 'admin'] },
   { to: '/profile', label: 'Профиль', roles: ['resident', 'author', 'admin'] },
 ];

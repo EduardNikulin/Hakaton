@@ -4,7 +4,9 @@ import { ProfilePage } from '../pages/ProfilePage';
 import { OperatorPage } from '../pages/OperatorPage';
 import { IncidentDetailPage } from '../pages/IncidentDetailPage';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
-import { SurveyConstructor } from '../pages/SurveyConstructor';
+import { SurveysPage } from '../pages/SurveysPage';
+import { SurveyDetailPage } from '../pages/SurveyDetailPage';
+import { SurveyWizard } from '../pages/SurveyWizard';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -38,24 +40,32 @@ export function AppRoutes() {
         }
       />
 
-      {/* === LEGACY: /surveys без проверки роли === */}
-      {/* <Route path="/surveys" element={<ProtectedRoute><SurveyConstructor /></ProtectedRoute>} /> */}
-      {/* Конструктор опросов — только author/admin (позже добавим отдельную страницу прохождения для жителя) */}
+            {/* Опросы — список и прохождение для всех авторизованных */}
       <Route
         path="/surveys"
         element={
-          <ProtectedRoute allowedRoles={['author', 'admin']}>
-            <SurveyConstructor />
+          <ProtectedRoute allowedRoles={['resident', 'author', 'admin']}>
+            <SurveysPage />
           </ProtectedRoute>
         }
       />
 
-      {/* Операторская доска — только admin */}
+      {/* Конструктор опросов — только author/admin */}
       <Route
-        path="/operator"
+        path="/surveys/new"
         element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <OperatorPage />
+          <ProtectedRoute allowedRoles={['author', 'admin']}>
+            <SurveyWizard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Прохождение опроса */}
+      <Route
+        path="/surveys/:id"
+        element={
+          <ProtectedRoute allowedRoles={['resident', 'author', 'admin']}>
+            <SurveyDetailPage />
           </ProtectedRoute>
         }
       />
