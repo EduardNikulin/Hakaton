@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.feedback import Report
+from typing import List
+
 
 
 class ReportRepository:
@@ -36,14 +38,14 @@ class ReportRepository:
         )
         return result.scalars().first()
 
-    async def list(self, district_id: int | None = None) -> list[Report]:
+    async def list(self, district_id: int | None = None) -> List[Report]:
         query = select(Report).options(selectinload(Report.attachments))
         if district_id is not None:
             query = query.where(Report.district_id == district_id)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def list_by_user(self, user_id: int) -> list[Report]:
+    async def list_by_user(self, user_id: int) -> List[Report]:
         result = await self.db.execute(
             select(Report)
             .where(Report.user_id == user_id)

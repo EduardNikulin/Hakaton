@@ -1,16 +1,33 @@
-services:
-  db:
-    image: postgis/postgis:17-3.5
-    container_name: ecocity-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+version: '3.8' # Версия спецификации синтаксиса файла
+
+services: # Список независимых контейнеров, которые мы поднимаем
+  db: # --- КОНТЕЙНЕР БАЗЫ ДАННЫХ ---
+    image: postgis/postgis:15-3.4 # Берем готовый образ Postgres 15 со встроенным PostGIS 3.4
+    container_name: ecocity-db # Имя контейнера в системе Docker
+    environment: # Переменные окружения для инициализации СУБД
+      POSTGRES_USER: postgres # Логин главного администратора базы
+      POSTGRES_PASSWORD: postgres # Пароль администратора
+      POSTGRES_DB: ecocity # Имя пустой базы, которая создастся автоматически при старте
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432" # Пробрасываем порт: [порт на твоем компе] : [внутренний порт контейнера]
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data # Привязываем виртуальный диск, чтобы при перезапуске докера данные базы не стирались
+    restart: always # Если база упадет, Docker сам поднимет её обратно
+
+  backend: # --- КОНТЕЙНЕР НАШЕГО ПРИЛОЖЕНИЯ FASTAPI ---
+    build:
+      context: ./backend # Указываем Docker, в какой папке искать исходники для сборки
+      dockerfile: Dockerfile # Указываем имя файла инструкций сборки образа
+    container_name: ecocity-backend # Имя контейнера бэкенда
+    ports:
+      - "8000:8000" # Пробрасываем порт 8000 наружу, чтобы фронтенд React мог делать HTTP-запросы
+    environment: # Прокидываем переменные окружения прямо в FastAPI
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/ecocity?ssl=disable
+      - SECRET_KEY=45af128a38b29c9384bc1337da8c1e405d688b1229a1b893cfc2d0f91ab4e821
+      - ALGORITHM=HS256
+    depends_on:
+      - db # ЖЕСТКОЕ ПРАВИЛО: бэкенд не запустится, пока контейнер базы "db" успешно не стартует
+    restart: always
 
 volumes:
-  postgres_data:
+  pgdata: # Объявляем наш именованный виртуальный диск для сохранения данных PostgreSQL
