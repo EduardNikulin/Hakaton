@@ -5,6 +5,7 @@ import { fetchDistricts } from '../api/maps';
 import { Timeline, type TimelineItem } from '../components/operator/Timeline';
 import { useAuth } from '../context/AuthContext';
 import type { Incident } from '../types/api';
+import { normalizeIncidentStatus, INCIDENT_STATUS_META } from '../utils/status';
 
 export function IncidentDetailPage() {
   const { id } = useParams();
@@ -75,7 +76,7 @@ export function IncidentDetailPage() {
         {/* Левая колонка: сведения + действия */}
         <div style={{ background: '#1e293b', borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-            <Badge label={`Статус: ${incident.status}`} />
+            <Badge label={`Статус: ${INCIDENT_STATUS_META[normalizeIncidentStatus(incident.status)].label}`} />
             <Badge label={`Достоверность: ${Math.round(incident.confidence_rate)}%`} />
           </div>
 
@@ -99,11 +100,11 @@ export function IncidentDetailPage() {
                   boxSizing: 'border-box', marginBottom: 12 }}
               />
               <div style={{ display: 'flex', gap: 10 }}>
-                {incident.status !== 'IN_PROGRESS' && (
+                {normalizeIncidentStatus(incident.status) !== 'IN_PROGRESS' && (
                   <ActionBtn onClick={() => changeStatus('IN_PROGRESS')} disabled={saving}
                     bg="#f59e0b">В работу</ActionBtn>
                 )}
-                {incident.status !== 'RESOLVED' && (
+                {normalizeIncidentStatus(incident.status) !== 'RESOLVED' && (
                   <ActionBtn onClick={() => changeStatus('RESOLVED')} disabled={saving}
                     bg="#22c55e">Решено</ActionBtn>
                 )}

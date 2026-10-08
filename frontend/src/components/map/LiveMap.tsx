@@ -3,11 +3,13 @@ import { YMaps, Map, Polygon, Placemark } from '@pbe/react-yandex-maps';
 import { fetchDistricts } from '../../api/maps';
 import { fetchSensors } from '../../api/sensors';
 import { fetchReports } from '../../api/reports';
+import { fetchIncidents } from '../../api/incidents';
 import { getToken } from '../../api/client';
 import { geojsonToYandex, polygonCenter, KALUGA_CENTER } from '../../utils/geo';
-import type { District, Report, Sensor } from '../../types/api';
+import type { District, Report, Sensor, Incident } from '../../types/api';
 import { ReportMarkers } from './ReportMarkers';
 import { SensorMarkers } from './SensorMarker';
+import { IncidentMarkers } from './IncidentMarker';
 
 const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
 
@@ -31,6 +33,8 @@ export function LiveMap({
   const [reports, setReports] = useState<Report[]>([]);
   // ДОБАВЛЕНО (Этап 4): датчики с реальными координатами
   const [sensors, setSensors] = useState<Sensor[]>([]);
+  // ДОБАВЛЕНО (Этап 6): инциденты для маркеров на карте
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // Инстанс карты — нужен для управления курсором
@@ -76,6 +80,20 @@ export function LiveMap({
       .then((r) => { if (alive) setReports(r); })
       .catch(() => { if (alive) setReports([]); });
     return () => { alive = false; };
+  }, [refreshKey]);
+
+  // ДОБАВЛЕНО (Этап 6): загрузка инцидентов + поллинг
+  useEffect(() => {
+    if (!getToken()) return;
+    let alive = true;
+    const load = () => {
+      fetchIncidents()
+        .then((r) => { if (alive) setIncidents(r); })
+        .catch(() => { if (alive) setIncidents([]); });
+    };
+    load();
+    const timer = setInterval(load, 30_000);
+    return () => { alive = false; clearInterval(timer); };
   }, [refreshKey]);
 
   // Курсор на ВСЕЙ карте через CursorManager: push() при входе, pop() при выходе.
@@ -176,6 +194,14 @@ export function LiveMap({
           />
 
           <ReportMarkers reports={allReports} reportMode={reportMode} onPick={onMapPick} />
+
+          {/* ДОБАВЛЕНО (Этап 6): маркеры активных инцидентов */}
+          <IncidentMarkers
+            incidents={incidents}
+            districts={districts}
+            reportMode={reportMode}
+            onPick={onMapPick}
+          />
 
           {pendingPoint && (
             <Placemark

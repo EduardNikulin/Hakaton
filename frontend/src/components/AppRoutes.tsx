@@ -9,6 +9,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { MyReportsPage } from '../pages/MyReportsPage';
+import { IncidentsPage } from '../pages/incidents/IncidentsPage';
 
 export function AppRoutes() {
   return (
@@ -22,7 +23,7 @@ export function AppRoutes() {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
       {/* Инциденты — просмотр для всех авторизованных (приоритет: отслеживание жителем) */}
-      <Route path="/incidents" element={<ProtectedRoute><OperatorPage /></ProtectedRoute>} />
+      <Route path="/incidents" element={<ProtectedRoute><IncidentsPage /></ProtectedRoute>} />
       <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetailPage /></ProtectedRoute>} />
 
       {/* === LEGACY: /analytics без проверки роли (любой залогиненный) === */}

@@ -1,7 +1,7 @@
 const TYPE_COLOR: Record<string, string> = {
-  created: '#f87171',
-  status: '#fbbf24',
-  resolved: '#34d399',
+  trigger: '#f87171',
+  info: '#3b82f6',
+  resolve: '#34d399',
   default: '#3b82f6',
 };
 

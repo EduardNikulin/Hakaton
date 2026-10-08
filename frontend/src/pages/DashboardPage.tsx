@@ -75,6 +75,8 @@ export function DashboardPage() {
         <Legend color="#3b82f6" label="новая" />
         <Legend color="#fbbf24" label="в работе" />
         <Legend color="#10b981" label="решена" />
+        <span style={{ marginLeft: 24, fontWeight: 600 }}>Инциденты:</span>
+        <span>🚨 активный</span>
       </div>
 
       {pendingPoint && (
