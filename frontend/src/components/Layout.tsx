@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { hasAnyRole } from '../utils/roles';
 import styles from './Layout.module.css';
 
@@ -27,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, role, isAuthenticated, isLoading, logout } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const visibleItems = NAV_ITEMS.filter(
@@ -37,6 +40,8 @@ export function Layout({ children }: { children: ReactNode }) {
     logout();
     navigate('/login');
   };
+
+  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
 
   return (
     <div className={styles.shell}>
@@ -50,6 +55,14 @@ export function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className={styles.navRight}>
+          <button
+            className={styles.themeBtn}
+            onClick={toggleTheme}
+            title="Переключить тему"
+            aria-label="Переключить тему"
+          >
+            {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {isLoading ? (
             <span className={styles.userEmail}>...</span>
           ) : isAuthenticated && user ? (

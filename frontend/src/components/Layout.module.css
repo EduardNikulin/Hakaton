@@ -1,13 +1,15 @@
-.shell { display: flex; flex-direction: column; min-height: 100vh; background: #0f172a; color: #f1f5f9; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; background: #1e293b; border-bottom: 1px solid #334155; }
+.shell { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); color: var(--text-primary); transition: background .3s, color .3s; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; background: var(--bg-card); border-bottom: 1px solid var(--border); transition: background .3s, border-color .3s; }
 .logo { font-weight: 700; font-size: 18px; color: #38bdf8; }
 .nav { display: flex; gap: 4px; }
-.navLink { padding: 8px 14px; border-radius: 6px; color: #94a3b8; text-decoration: none; font-size: 14px; }
-.navLink:hover { background: #334155; color: #f1f5f9; }
+.navLink { padding: 8px 14px; border-radius: 6px; color: var(--text-secondary); text-decoration: none; font-size: 14px; }
+.navLink:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .navLinkActive { padding: 8px 14px; border-radius: 6px; background: #0ea5e9; color: #fff; text-decoration: none; font-size: 14px; }
 .content { flex: 1; padding: 16px 24px; }
-/* === ДОБАВЛЕНО (Этап 3): правый блок шапки === */
+/* === правый блок шапки === */
 .navRight { display: flex; align-items: center; gap: 12px; }
-.userEmail { font-size: 13px; color: #94a3b8; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.authBtn { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #fca5a5; cursor: pointer; font-size: 13px; }
+.userEmail { font-size: 13px; color: var(--text-secondary); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.authBtn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: #fca5a5; cursor: pointer; font-size: 13px; }
 .loginBtn { padding: 8px 16px; border-radius: 6px; background: #22c55e; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+/* === переключатель темы === */
+.themeBtn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; }

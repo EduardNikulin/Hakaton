@@ -31,7 +31,7 @@ export function IncidentsPage({ title = '🚨 Инциденты' }: { title?: s
         .finally(() => { if (alive) setLoading(false); });
     };
     load();
-    // ДОБАВЛЕНО (Этап 6): поллинг — отслеживание инцидентов в реальном времени
+    // Поллинг — отслеживание инцидентов в реальном времени
     const timer = setInterval(load, 30_000);
     return () => { alive = false; clearInterval(timer); };
   }, []);
@@ -48,7 +48,6 @@ export function IncidentsPage({ title = '🚨 Инциденты' }: { title?: s
     [incidents, filter],
   );
 
-  // Счётчики по табам (по нормализованному статусу — учитывает CRITICAL/WARNING)
   const counts = useMemo(() => ({
     ALL: incidents.length,
     OPEN: incidents.filter((i) => normalizeIncidentStatus(i.status) === 'OPEN').length,
@@ -68,15 +67,15 @@ export function IncidentsPage({ title = '🚨 Инциденты' }: { title?: s
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setFilter(t.key)}
             style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
-              border: filter === t.key ? '1px solid #22c55e' : '1px solid #334155',
-              background: filter === t.key ? '#14532d' : 'transparent',
-              color: filter === t.key ? '#86efac' : '#94a3b8', fontWeight: 600 }}>
+              border: filter === t.key ? '1px solid #22c55e' : '1px solid var(--border)',
+              background: filter === t.key ? 'var(--green-bg)' : 'transparent',
+              color: filter === t.key ? '#22c55e' : 'var(--text-secondary)', fontWeight: 600 }}>
             {t.label} {counts[t.key]}
           </button>
         ))}
       </div>
 
-      {loading && <div style={{ color: '#64748b' }}>Загрузка…</div>}
+      {loading && <div style={{ color: 'var(--text-muted)' }}>Загрузка…</div>}
       {error && <div style={{ color: '#ef4444' }}>{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -84,8 +83,8 @@ export function IncidentsPage({ title = '🚨 Инциденты' }: { title?: s
           <IncidentCard key={i.id} incident={i} districtName={districtNames[i.district_id]} />
         ))}
         {!loading && !error && visible.length === 0 && (
-          <div style={{ color: '#64748b', fontSize: 14, padding: 24, textAlign: 'center',
-            background: '#1e293b', borderRadius: 14 }}>Инцидентов нет 🎉</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 14, padding: 24, textAlign: 'center',
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>Инцидентов нет 🎉</div>
         )}
       </div>
     </div>

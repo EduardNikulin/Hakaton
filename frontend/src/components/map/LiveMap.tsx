@@ -218,7 +218,8 @@ export function LiveMap({
 function Panel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ height: 560, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#1e293b', borderRadius: 16, color: '#94a3b8', fontSize: 15 }}>
+      background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
+      color: 'var(--text-secondary)', fontSize: 15 }}>
       {children}
     </div>
   );

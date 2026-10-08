@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { fetchIncident, updateIncidentStatus, fetchIncidentTimeline } from '../api/incidents';
 import { fetchDistricts } from '../api/maps';
 import { Timeline, type TimelineItem } from '../components/operator/Timeline';
@@ -9,7 +9,6 @@ import { normalizeIncidentStatus, INCIDENT_STATUS_META } from '../utils/status';
 
 export function IncidentDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
@@ -57,7 +56,7 @@ export function IncidentDetailPage() {
   };
 
   if (error && !incident) return <div style={{ color: '#ef4444', maxWidth: 900, margin: '0 auto' }}>{error}</div>;
-  if (!incident) return <div style={{ color: '#64748b', maxWidth: 900, margin: '0 auto' }}>Загрузка…</div>;
+  if (!incident) return <div style={{ color: 'var(--text-muted)', maxWidth: 900, margin: '0 auto' }}>Загрузка…</div>;
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -66,7 +65,7 @@ export function IncidentDetailPage() {
       </Link>
 
       <h1 style={{ fontSize: 22, margin: '12px 0 6px' }}>{incident.title}</h1>
-      <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
         📍 {districtName || `Район №${incident.district_id}`} · создан{' '}
         {new Date(incident.created_at).toLocaleString('ru-RU')}
         {incident.resolved_at && <> · решён {new Date(incident.resolved_at).toLocaleString('ru-RU')}</>}
@@ -74,29 +73,29 @@ export function IncidentDetailPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
         {/* Левая колонка: сведения + действия */}
-        <div style={{ background: '#1e293b', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
             <Badge label={`Статус: ${INCIDENT_STATUS_META[normalizeIncidentStatus(incident.status)].label}`} />
             <Badge label={`Достоверность: ${Math.round(incident.confidence_rate)}%`} />
           </div>
 
-          <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 12 }}>
-            Привязано жалоб: <b style={{ color: '#f1f5f9' }}>{incident.report_ids.join(', ') || '—' }</b>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+            Привязано жалоб: <b style={{ color: 'var(--text-primary)' }}>{incident.report_ids.join(', ') || '—' }</b>
             <br />
-            Датчиков: <b style={{ color: '#f1f5f9' }}>{incident.sensor_ids.join(', ') || '—'}</b>
+            Датчиков: <b style={{ color: 'var(--text-primary)' }}>{incident.sensor_ids.join(', ') || '—'}</b>
           </div>
 
           {isAdmin ? (
             <>
-              <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
                 Комментарий оператора
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
-                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #334155',
-                  background: '#0f172a', color: '#f1f5f9', fontFamily: 'inherit',
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)',
+                  background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'inherit',
                   boxSizing: 'border-box', marginBottom: 12 }}
               />
               <div style={{ display: 'flex', gap: 10 }}>
@@ -111,7 +110,7 @@ export function IncidentDetailPage() {
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 12, color: '#64748b' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               Смена статуса доступна администратору
             </div>
           )}
@@ -120,7 +119,7 @@ export function IncidentDetailPage() {
         </div>
 
         {/* Правая колонка: таймлайн */}
-        <div style={{ background: '#1e293b', borderRadius: 14, padding: 18 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
           <h2 style={{ margin: '0 0 14px', fontSize: 15 }}>Хронология</h2>
           <Timeline items={timeline} />
         </div>
@@ -132,7 +131,7 @@ export function IncidentDetailPage() {
 function Badge({ label }: { label: string }) {
   return (
     <span style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12,
-      background: '#334155', color: '#e2e8f0' }}>{label}</span>
+      background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>{label}</span>
   );
 }
 

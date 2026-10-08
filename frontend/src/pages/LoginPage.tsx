@@ -5,15 +5,14 @@ import { useAuth } from '../context/AuthContext';
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Если уже залогинен — перенаправляем
   useEffect(() => {
     const token = localStorage.getItem('ecocity_token');
     if (token) navigate('/', { replace: true });
@@ -25,13 +24,8 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      if (isRegister) {
-        await register(email, password);
-      } else {
-        await login(email, password);
-      }
+      await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка авторизации');
@@ -40,55 +34,38 @@ export function LoginPage() {
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)',
+    background: 'var(--bg)', color: 'var(--text-primary)', marginBottom: 16,
+  };
+
   return (
-    <div style={{ maxWidth: 400, margin: '80px auto', padding: 24, background: '#1e293b', borderRadius: 16, color: '#f1f5f9' }}>
-      <h2 style={{ marginBottom: 20 }}>{isRegister ? 'Регистрация' : 'Вход'}</h2>
+    <div style={{ maxWidth: 400, margin: '80px auto', padding: 24, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, color: 'var(--text-primary)' }}>
+      <h2 style={{ marginBottom: 20 }}>Вход</h2>
       <form onSubmit={handleSubmit}>
-        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#94a3b8' }}>
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
           Email
         </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#f1f5f9', marginBottom: 16 }}
-        />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
 
-        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#94a3b8' }}>
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
           Пароль
         </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-          style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#f1f5f9', marginBottom: 16 }}
-        />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} style={inputStyle} />
 
-        {error && (
-          <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 13 }}>{error}</div>
-        )}
+        {error && <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 13 }}>{error}</div>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%', padding: 12, borderRadius: 8, border: 'none',
-            background: loading ? '#475569' : '#22c55e',
+        <button type="submit" disabled={loading}
+          style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none',
+            background: loading ? 'var(--bg-secondary)' : '#22c55e',
             color: '#fff', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-            marginBottom: 12,
-          }}
-        >
-          {loading ? 'Подождите...' : isRegister ? 'Зарегистрироваться' : 'Войти'}
+            marginBottom: 12 }}>
+          {loading ? 'Подождите...' : 'Войти'}
         </button>
       </form>
 
-      <Link
-        to="/register"
-        style={{ display: 'block', textAlign: 'center', padding: 10, color: '#94a3b8', textDecoration: 'none', fontSize: 14 }}
-      >
+      <Link to="/register"
+        style={{ display: 'block', textAlign: 'center', padding: 10, color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 14 }}>
         Нет аккаунта? Зарегистрироваться
       </Link>
     </div>

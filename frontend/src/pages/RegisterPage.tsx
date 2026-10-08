@@ -31,34 +31,34 @@ export function RegisterPage() {
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: 10, borderRadius: 8, border: '1px solid #334155',
-    background: '#0f172a', color: '#f1f5f9', marginBottom: 16,
+    width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)',
+    background: 'var(--bg)', color: 'var(--text-primary)', marginBottom: 16,
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '80px auto', padding: 24, background: '#1e293b', borderRadius: 16, color: '#f1f5f9' }}>
+    <div style={{ maxWidth: 400, margin: '80px auto', padding: 24, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, color: 'var(--text-primary)' }}>
       <h2 style={{ marginBottom: 20 }}>Регистрация</h2>
       <form onSubmit={handleSubmit}>
-        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#94a3b8' }}>Email</label>
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Email</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
 
-        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#94a3b8' }}>Пароль</label>
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Пароль</label>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} style={inputStyle} />
 
-        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: '#94a3b8' }}>Повторите пароль</label>
+        <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Повторите пароль</label>
         <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} style={inputStyle} />
 
         {error && <div style={{ color: '#ef4444', marginBottom: 16, fontSize: 13 }}>{error}</div>}
 
         <button type="submit" disabled={loading}
           style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none',
-            background: loading ? '#475569' : '#22c55e', color: '#fff', fontWeight: 600,
+            background: loading ? 'var(--bg-secondary)' : '#22c55e', color: '#fff', fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 12 }}>
           {loading ? 'Подождите...' : 'Зарегистрироваться'}
         </button>
       </form>
 
-      <Link to="/login" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>
+      <Link to="/login" style={{ display: 'block', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}>
         Уже есть аккаунт? Войти
       </Link>
     </div>

@@ -51,10 +51,10 @@ export function ReportModal({ point, onClose, onCreated }: Props) {
         display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <div onClick={(e) => e.stopPropagation()}
-        style={{ background: '#1e293b', borderRadius: 16, width: 440, maxWidth: '92vw',
-          padding: 24, color: '#f1f5f9' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: 440, maxWidth: '92vw',
+          padding: 24, color: 'var(--text-primary)' }}>
         <h2 style={{ margin: '0 0 6px', fontSize: 19 }}>Сообщить о проблеме</h2>
-        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
           📍 {point.lat.toFixed(5)}, {point.lon.toFixed(5)}
         </div>
 
@@ -62,9 +62,9 @@ export function ReportModal({ point, onClose, onCreated }: Props) {
           {CATEGORIES.map((c) => (
             <button key={c} onClick={() => setCategory(c)}
               style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
-                border: category === c ? '1px solid #22c55e' : '1px solid #334155',
-                background: category === c ? '#14532d' : 'transparent',
-                color: category === c ? '#86efac' : '#94a3b8' }}>
+                border: category === c ? '1px solid #22c55e' : '1px solid var(--border)',
+                background: category === c ? 'var(--green-bg)' : 'transparent',
+                color: category === c ? '#22c55e' : 'var(--text-secondary)' }}>
               {c}
             </button>
           ))}
@@ -75,8 +75,8 @@ export function ReportModal({ point, onClose, onCreated }: Props) {
           onChange={(e) => setText(e.target.value)}
           placeholder="Что, где, когда..."
           rows={4}
-          style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #334155',
-            background: '#0f172a', color: '#f1f5f9', resize: 'vertical',
+          style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid var(--border)',
+            background: 'var(--bg)', color: 'var(--text-primary)', resize: 'vertical',
             fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 12 }}
         />
 
@@ -84,13 +84,13 @@ export function ReportModal({ point, onClose, onCreated }: Props) {
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button onClick={onClose}
-            style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid #334155',
-              background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+            style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid var(--border)',
+              background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             Отмена
           </button>
           <button onClick={handleSubmit} disabled={loading || !text.trim()}
             style={{ padding: '10px 18px', borderRadius: 8, border: 'none',
-              background: loading || !text.trim() ? '#475569' : '#22c55e',
+              background: loading || !text.trim() ? 'var(--bg-secondary)' : '#22c55e',
               color: '#fff', fontWeight: 600,
               cursor: loading || !text.trim() ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Отправка...' : 'Отправить'}

@@ -63,7 +63,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', fontSize: 13, color: '#94a3b8' }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', fontSize: 13, color: 'var(--text-secondary)' }}>
         <span style={{ fontWeight: 600 }}>ECI (выше = чище):</span>
         <Legend color="#22c55e" label="≥ 75 — чисто" />
         <Legend color="#f59e0b" label="≥ 50 — средне" />

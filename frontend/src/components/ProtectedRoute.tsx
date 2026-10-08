@@ -13,11 +13,10 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
   const location = useLocation();
 
   if (isLoading) {
-    return <div style={{ color: '#94a3b8', padding: 40 }}>Загрузка...</div>;
+    return <div style={{ color: 'var(--text-secondary)', padding: 40 }}>Загрузка...</div>;
   }
 
   if (!isAuthenticated) {
-    // Редирект на /login с сохранением текущего пути
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -26,11 +25,11 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     const hasRole = allowedRoles.some((r) => normalizeRole(r) === current);
     if (!hasRole) {
       return (
-        <div style={{ maxWidth: 520, margin: '60px auto', padding: 32, background: '#1e293b',
-          borderRadius: 16, color: '#f1f5f9', textAlign: 'center' }}>
+        <div style={{ maxWidth: 520, margin: '60px auto', padding: 32, background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 16, color: 'var(--text-primary)', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>⛔</div>
           <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>Доступ запрещён</h2>
-          <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 20 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 20 }}>
             Для этой страницы нужна роль: {allowedRoles.join(' / ')}.<br />
             Ваша роль: {user?.role ?? '—'}.
           </p>
