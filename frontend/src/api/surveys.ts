@@ -22,6 +22,7 @@ export interface Survey {
   description: string | null;
   is_active: boolean;
   created_at: string;
+  created_by: number | null;
   questions: SurveyQuestion[];
 }
 
@@ -71,4 +72,12 @@ export function submitSurveyAnswers(
   answers: SingleAnswerSubmit[],
 ): Promise<void> {
   return api.post(`/api/v1/feedback/surveys/${surveyId}/answers`, { answers });
+}
+
+export function fetchSurvey(id: number): Promise<Survey> {
+  return api.get<Survey>(`/api/v1/feedback/surveys/${id}`);
+}
+
+export function fetchMySurveys(): Promise<Survey[]> {
+  return api.get<Survey[]>('/api/v1/feedback/surveys/my');
 }

@@ -12,6 +12,7 @@ import { RegisterPage } from '../pages/RegisterPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { MyReportsPage } from '../pages/MyReportsPage';
 import { IncidentsPage } from '../pages/incidents/IncidentsPage';
+import { SettingsPage } from '../pages/SettingsPage';
 
 export function AppRoutes() {
   return (
@@ -23,6 +24,7 @@ export function AppRoutes() {
       {/* Защищённые маршруты — требуют авторизацию */}
       <Route path="/reports/my" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/profile/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
       {/* Инциденты — просмотр для всех авторизованных (приоритет: отслеживание жителем) */}
       <Route path="/incidents" element={<ProtectedRoute><IncidentsPage /></ProtectedRoute>} />

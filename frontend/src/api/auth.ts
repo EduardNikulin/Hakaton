@@ -19,3 +19,24 @@ export async function fetchMe(): Promise<CurrentUser> {
 export function logout(): void {
   clearToken();
 }
+
+export interface UserUpdateDTO {
+  full_name?: string | null;
+  notify_new_surveys?: boolean;
+  notify_results?: boolean;
+  notify_pollution?: boolean;
+}
+
+export function updateMe(dto: UserUpdateDTO): Promise<CurrentUser> {
+  return api.patch<CurrentUser>('/api/v1/auth/me', dto);
+}
+
+export function changePassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<{ status: string; message: string }> {
+  return api.post('/api/v1/auth/me/password', {
+    old_password: oldPassword,
+    new_password: newPassword,
+  });
+}

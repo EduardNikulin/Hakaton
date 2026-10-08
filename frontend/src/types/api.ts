@@ -81,11 +81,17 @@ export interface Token {
 }
 
 // /auth/me — GET
+// /auth/me — GET
 export interface CurrentUser {
   id: number;
   email: string;
   role: string;
   is_active: boolean;
+  full_name: string | null;
+  created_at: string | null;
+  notify_new_surveys: boolean;
+  notify_results: boolean;
+  notify_pollution: boolean;
 }
 
 // /analytics/dashboard

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import {
-  fetchActiveSurveys, submitSurveyAnswers, type Survey, type SingleAnswerSubmit,
+  fetchSurvey, submitSurveyAnswers, type Survey, type SingleAnswerSubmit,
 } from '../api/surveys';
+import { ApiError } from '../api';
 
 export function SurveyDetailPage() {
   const { id } = useParams();
@@ -20,13 +21,13 @@ export function SurveyDetailPage() {
   useEffect(() => {
     if (!id) return;
     let alive = true;
-    fetchActiveSurveys()
-      .then((list) => {
+    fetchSurvey(Number(id))
+      .then((s) => { if (alive) setSurvey(s); })
+      .catch((e) => {
         if (!alive) return;
-        const found = list.find((s) => s.id === Number(id));
-        if (found) setSurvey(found); else setNotFound(true);
+        if (e instanceof ApiError && e.status === 404) setNotFound(true);
+        else setError(e instanceof Error ? e.message : 'Ошибка загрузки');
       })
-      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : 'Ошибка загрузки'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [id]);

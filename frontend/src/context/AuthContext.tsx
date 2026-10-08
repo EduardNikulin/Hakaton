@@ -21,9 +21,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Роль берём из ответа /auth/me; если бэкенд её не отдаёт —
   // признак админа по префиксу почты (созвучно с бэкендом, role=='admin')
-  const resolveRole = (u: CurrentUser): string =>
+    const resolveRole = (u: CurrentUser): string =>
     (u as unknown as { role?: string }).role
-    ?? (u.email.startsWith('admin') ? 'admin' : 'user');
+    ?? (u.email.startsWith('admin') ? 'admin' : 'resident');
 
   useEffect(() => {
     // Восстанавливаем сессию из localStorage при старте
