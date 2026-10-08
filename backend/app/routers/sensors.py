@@ -2,17 +2,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from geoalchemy2.functions import ST_Contains, ST_SetSRID, ST_MakePoint
 
 from app.database import get_db
 from app.dependencies import get_current_user, RoleChecker
+from app.models.core import District
 from app.models.sensors import Sensor, SensorMeasurement
-from app.schemas.sensors import SensorSchema, MeasurementCreate, MeasurementHistoryOut
+from app.schemas.sensors import SensorSchema, SensorCreate, MeasurementCreate, MeasurementHistoryOut
 from app.tasks.incident_detector import run_incident_detection
 
 router = APIRouter(prefix="/api/v1/sensors", tags=["IoT Sensors Gateway"])
 
 # Ограничения доступа
 allow_sensors_operators = Depends(RoleChecker(allowed_roles=["author", "admin"]))
+# Создание/демонтаж постов - только Админ
+allow_sensors_admin = Depends(RoleChecker(allowed_roles=["admin"]))
 
 @router.get("", response_model=list[SensorSchema])
 async def get_all_sensors(db: AsyncSession = Depends(get_db)):
@@ -31,6 +35,36 @@ async def get_sensor_history(id: int, db: AsyncSession = Depends(get_db)):
         .limit(50)
     )
     return result.scalars().all()
+
+@router.post("", response_model=SensorSchema, status_code=status.HTTP_201_CREATED, dependencies=[allow_sensors_admin])
+async def create_sensor(data: SensorCreate, db: AsyncSession = Depends(get_db)):
+    """Создание нового поста мониторинга (доступ: Админ).
+    Если район не задан явно - определяется автоматически через PostGIS ST_Contains."""
+    lat, lon = data.location[0], data.location[1]
+    geo_point = ST_SetSRID(ST_MakePoint(lon, lat), 4326)
+
+    district_id = data.district_id
+    if district_id is None:
+        district_query = await db.execute(
+            select(District).where(ST_Contains(District.polygon, geo_point))
+        )
+        district = district_query.scalars().first()
+        district_id = district.id if district else None
+
+    new_sensor = Sensor(
+        name=data.name,
+        sensor_type=data.sensor_type,
+        district_id=district_id,
+        # EWKT-строка: явный SRID, иначе PostGIS сохранит точку без системы координат
+        location=f"SRID=4326;POINT({lon} {lat})",
+        status=data.status,
+    )
+    db.add(new_sensor)
+    await db.commit()
+
+    # Повторный SELECT: lat/lon - это column_property, вычисляются при выборке
+    result = await db.execute(select(Sensor).where(Sensor.id == new_sensor.id))
+    return result.scalars().one()
 
 @router.post("/iot/measurements", status_code=status.HTTP_201_CREATED)
 async def receive_iot_measurement(data: MeasurementCreate, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
