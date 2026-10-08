@@ -5,16 +5,48 @@ import { OperatorPage } from '../pages/OperatorPage';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
 import { SurveyConstructor } from '../pages/SurveyConstructor';
 import { LoginPage } from '../pages/LoginPage';
+import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<DashboardPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/incidents" element={<OperatorPage />} />
-      <Route path="/analytics" element={<AnalyticsPage />} />
-      <Route path="/surveys" element={<SurveyConstructor />} />
+
+      {/* Защищённые маршруты — все требуют авторизацию */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/incidents"
+        element={
+          <ProtectedRoute>
+            <OperatorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/surveys"
+        element={
+          <ProtectedRoute>
+            <SurveyConstructor />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
