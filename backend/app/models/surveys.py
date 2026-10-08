@@ -18,6 +18,9 @@ class Survey(Base):
     description: Mapped[Optional[str]] = mapped_column(String(1000))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    created_by: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
 
     questions: Mapped[List["Question"]] = relationship("Question", back_populates="survey", cascade="all, delete-orphan")
 

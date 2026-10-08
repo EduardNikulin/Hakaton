@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.core import City, District
 from app.models.feedback import Report
+from app.models.sensors import EcoIndexHistory
 from app.services.geo import make_point
 
 # Источники метрик вынесены в общий модуль eci_metrics (единый расчёт с картой)
@@ -66,6 +67,19 @@ class DistrictRepository:
     async def get_first_city(self) -> City | None:
         result = await self.db.execute(select(City).order_by(City.id).limit(1))
         return result.scalars().first()
+
+    async def get_history(self, district_id: int, limit: int = 100) -> list[dict]:
+        """История ECI района для графика динамики."""
+        result = await self.db.execute(
+            select(EcoIndexHistory.calculated_at, EcoIndexHistory.eci_score)
+            .where(EcoIndexHistory.district_id == district_id)
+            .order_by(EcoIndexHistory.calculated_at.asc())
+            .limit(limit)
+        )
+        return [
+            {"calculated_at": row.calculated_at.isoformat(), "eci_score": row.eci_score}
+            for row in result.all()
+        ]
 
     # ── GeoJSON-обёртка ─────────────────────────────────────────────
 

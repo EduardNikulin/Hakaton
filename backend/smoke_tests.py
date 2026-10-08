@@ -19,8 +19,13 @@ def make_mock_user(email="test@test.com", role="resident", user_id=1, is_active=
     user.email = email
     user.role = role
     user.is_active = is_active
+    # Новые поля профиля (см. UserOut)
+    user.full_name = None
+    user.created_at = None
+    user.notify_new_surveys = True
+    user.notify_results = True
+    user.notify_pollution = False
     return user
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MOCK DATABASE SESSION
@@ -315,6 +320,72 @@ class TestAuthentication:
         response = await client.get("/api/v1/auth/me", headers=headers)
         assert response.status_code == 401
 
+class TestProfile:
+    """Smoke-тесты профиля и настроек пользователя."""
+
+    @pytest.mark.asyncio
+    async def test_get_me_has_profile_fields(self, resident_client: AsyncClient):
+        """GET /api/v1/auth/me — отдаёт поля профиля и уведомлений."""
+        response = await resident_client.get("/api/v1/auth/me")
+        assert response.status_code == 200
+        data = response.json()
+        assert "full_name" in data
+        assert "notify_new_surveys" in data
+        assert "notify_results" in data
+        assert "notify_pollution" in data
+
+    @pytest.mark.asyncio
+    async def test_patch_me_requires_auth(self, client: AsyncClient):
+        """PATCH /api/v1/auth/me — без токена → 401."""
+        response = await client.patch("/api/v1/auth/me", json={"full_name": "Иван"})
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_patch_me_updates_profile(self, resident_client: AsyncClient):
+        """PATCH /api/v1/auth/me — resident обновляет имя."""
+        from types import SimpleNamespace
+        with patch("app.routers.auth.UserService") as MockService:
+            instance = MockService.return_value
+            instance.update_profile = AsyncMock(return_value=SimpleNamespace(
+                id=1, email="test@test.com", role="resident", is_active=True,
+                full_name="Иван", created_at=None,
+                notify_new_surveys=True, notify_results=True, notify_pollution=False,
+            ))
+            response = await resident_client.patch(
+                "/api/v1/auth/me", json={"full_name": "Иван"},
+            )
+            assert response.status_code == 200
+            assert response.json()["full_name"] == "Иван"
+
+    @pytest.mark.asyncio
+    async def test_change_password_requires_auth(self, client: AsyncClient):
+        """POST /api/v1/auth/me/password — без токена → 401."""
+        response = await client.post(
+            "/api/v1/auth/me/password",
+            json={"old_password": "oldpass1", "new_password": "newpass1"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_change_password_short_new_returns_422(self, resident_client: AsyncClient):
+        """POST /api/v1/auth/me/password — короткий новый пароль → 422."""
+        response = await resident_client.post(
+            "/api/v1/auth/me/password",
+            json={"old_password": "oldpass1", "new_password": "123"},
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_change_password_success(self, resident_client: AsyncClient):
+        """POST /api/v1/auth/me/password — успешная смена."""
+        with patch("app.routers.auth.UserService") as MockService:
+            instance = MockService.return_value
+            instance.change_password = AsyncMock(return_value=None)
+            response = await resident_client.post(
+                "/api/v1/auth/me/password",
+                json={"old_password": "oldpass1", "new_password": "newpass1"},
+            )
+            assert response.status_code == 200
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. SENSORS (IoT)

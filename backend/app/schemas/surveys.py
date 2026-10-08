@@ -43,6 +43,7 @@ class SurveyOut(BaseModel):
     description: str | None
     is_active: bool
     created_at: datetime
+    created_by: int | None = None
     questions: list[QuestionOut] = []
 
     class Config:

@@ -13,8 +13,11 @@ class SurveyRepository:
 
     async def create_survey(
         self, *, title: str, description: str | None, is_active: bool,
+        created_by: int | None = None,
     ) -> Survey:
-        survey = Survey(title=title, description=description, is_active=is_active)
+        survey = Survey(
+            title=title, description=description, is_active=is_active, created_by=created_by,
+        )
         self.db.add(survey)
         await self.db.flush()  # получаем id до commit
         return survey
@@ -43,6 +46,14 @@ class SurveyRepository:
         result = await self.db.execute(
             select(Survey)
             .where(Survey.is_active == True)  # noqa: E712
+            .options(selectinload(Survey.questions).selectinload(Question.options))
+        )
+        return list(result.scalars().all())
+
+    async def list_by_creator(self, user_id: int) -> list[Survey]:
+        result = await self.db.execute(
+            select(Survey)
+            .where(Survey.created_by == user_id)
             .options(selectinload(Survey.questions).selectinload(Question.options))
         )
         return list(result.scalars().all())

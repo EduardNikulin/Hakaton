@@ -35,15 +35,83 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection):
     # Функция-фильтр для исключения дублирования ГИС-индексов
+        # Исключаем служебные таблицы PostGIS и Tiger Geocoder
+    SERVICE_SCHEMAS = {"tiger", "tiger_data", "topology"}
+
+    SERVICE_TABLES = {
+        "spatial_ref_sys",
+        "geometry_columns",
+        "geography_columns",
+        "raster_columns",
+        "raster_overviews",
+        "addr",
+        "addrfeat",
+        "bg",
+        "county",
+        "county_lookup",
+        "countysub_lookup",
+        "cousub",
+        "direction_lookup",
+        "edges",
+        "faces",
+        "featnames",
+        "place",
+        "place_lookup",
+        "state",
+        "state_lookup",
+        "street_type_lookup",
+        "secondary_unit_lookup",
+        "state",
+        "tract",
+        "zcta5",
+        "layer",
+        "topology",
+        "pagc_rules",
+        "loader_lookuptables",
+        "geocode_settings",
+        "geocode_settings_default",
+        "zip_state",
+        "zip_state_loc",
+        "loader_platform",
+        "loader_variables",
+        "tabblock",
+        "zip_lookup",
+        "zip_lookup_base",
+        "tabblock20",
+        "pagc_lex",
+        "zip_lookup_all",
+        "pagc_gaz",
+    }
+
     def include_object(object, name, type_, reflected, compare_to):
-        if type_ == "index" and name and name.startswith("idx_"):
+        schema = getattr(object, "schema", None)
+
+        # Служебные схемы и таблицы
+        if schema in SERVICE_SCHEMAS:
             return False
+
+        if type_ == "table" and name in SERVICE_TABLES:
+            return False
+
+        # Не сравниваем индексы служебных таблиц
+        if type_ == "index":
+            table = getattr(object, "table", None)
+            if table is not None:
+                if getattr(table, "schema", None) in SERVICE_SCHEMAS:
+                    return False
+                if table.name in SERVICE_TABLES:
+                    return False
+
+            # Сохраняем существующее исключение GIS-индексов
+            if name and name.startswith("idx_"):
+                return False
+
         return True
 
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_object=include_object  # Подключаем наш фильтр
+        include_object=include_object,
     )
 
     with context.begin_transaction():

@@ -15,10 +15,11 @@ class SurveyService:
         self.db = db
         self.surveys = SurveyRepository(db)
 
-    async def create_survey(self, data) -> Survey:
+    async def create_survey(self, data, created_by: int | None = None) -> Survey:
         """Создать опрос с деревом вопросов и вариантов (один атомарный commit)."""
         survey = await self.surveys.create_survey(
-            title=data.title, description=data.description, is_active=data.is_active
+            title=data.title, description=data.description,
+            is_active=data.is_active, created_by=created_by,
         )
         await self.surveys.add_questions(survey.id, data.questions)
         await self.db.commit()
@@ -26,6 +27,14 @@ class SurveyService:
 
     async def list_active(self) -> list[Survey]:
         return await self.surveys.list_active()
+
+    
+
+    async def list_by_creator(self, user_id: int) -> list[Survey]:
+        return await self.surveys.list_by_creator(user_id)
+
+    async def get_survey(self, survey_id: int) -> Survey:
+        return await self._get_or_404(survey_id)
 
     async def set_active(self, survey_id: int, is_active: bool) -> None:
         survey = await self._get_or_404(survey_id)

@@ -83,3 +83,6 @@ class DistrictService:
         name = district.name
         await self.districts.delete(district)
         return None  # noqa: R504 — return value is ignored, just for clarity
+    
+    async def get_history(self, district_id: int) -> list[dict]:
+        return await self.districts.get_history(district_id)

@@ -1,5 +1,7 @@
 # backend/app/schemas/__init__.py
-from app.schemas.auth import UserRegister, UserLogin, Token, TokenData
+from app.schemas.auth import (
+    UserRegister, Token, TokenData, UserOut, UserUpdate, PasswordChange,
+)
 from app.schemas.core import CitySchema, EciStatsSchema, DistrictSchema, DistrictShortOut
 from app.schemas.feedback import ReportAttachmentSchema, ReportCreate, ReportOut
 from app.schemas.surveys import (

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_user, RoleChecker
+from app.dependencies import RoleChecker, get_current_user
 from app.models.users import User
 from app.schemas.surveys import SurveyCreate, SurveyOut, SurveyAnswersSubmit
 from app.services.survey_service import SurveyService
@@ -19,16 +19,30 @@ allow_authors = Depends(RoleChecker(allowed_roles=["author", "admin"]))
 async def create_survey(
     survey_data: SurveyCreate,
     db: AsyncSession = Depends(get_db),
-    _=allow_authors,
+    current_user: User = Depends(RoleChecker(allowed_roles=["author", "admin"])),
 ):
     """Конструктор: опрос с вопросами и вариантами (Доступ: Автор, Админ)."""
-    return await SurveyService(db).create_survey(survey_data)
-
+    return await SurveyService(db).create_survey(survey_data, created_by=current_user.id)
 
 @router.get("", response_model=list[SurveyOut])
 async def get_active_surveys(db: AsyncSession = Depends(get_db)):
     """Лента жителя: все активные опросы."""
     return await SurveyService(db).list_active()
+
+
+@router.get("/my", response_model=list[SurveyOut])
+async def get_my_surveys(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker(allowed_roles=["author", "admin"])),
+):
+    """Опросы, созданные текущим автором (Доступ: Автор, Админ)."""
+    return await SurveyService(db).list_by_creator(current_user.id)
+
+
+@router.get("/{id}", response_model=SurveyOut)
+async def get_survey(id: int, db: AsyncSession = Depends(get_db)):
+    """Детальная карточка опроса по id."""
+    return await SurveyService(db).get_survey(id)
 
 
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
