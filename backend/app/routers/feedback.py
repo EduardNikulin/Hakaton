@@ -1,118 +1,23 @@
 # backend/app/routers/feedback.py
+"""HTTP-слой опросов (surveys). Жалобы вынесены в routers/reports.py."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from geoalchemy2.functions import ST_Contains, ST_SetSRID, ST_MakePoint
 
 from app.database import get_db
 from app.dependencies import get_current_user, RoleChecker
 from app.models.users import User
-from app.models.core import District
-from app.models.feedback import Report
 from app.models.surveys import Survey, Question, QuestionOption, SurveyAnswer
-from app.schemas.feedback import ReportCreate, ReportOut
 from app.schemas.surveys import SurveyCreate, SurveyOut, SurveyAnswersSubmit
 
-router = APIRouter(prefix="/api/v1/feedback", tags=["Feedback & Surveys"])
+router = APIRouter(prefix="/api/v1/feedback", tags=["Surveys"])
 
-# Зависимости по ролям
 allow_residents = Depends(get_current_user)
 allow_authors = Depends(RoleChecker(allowed_roles=["author", "admin"]))
-allow_admin = Depends(RoleChecker(allowed_roles=["admin"]))
-
-# --- БЛОК ЖАЛОБ ЖИТЕЛЕЙ (REPORTS) ---
-
-@router.post("/reports", response_model=ReportOut, status_code=status.HTTP_201_CREATED)
-async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db), current_user: User = allow_residents):
-    """Создание жалобы жителем с автоопределением района через PostGIS ST_Contains."""
-    lat, lon = report_data.location[0], report_data.location[1]
-    # Создаем гео-точку в проекции WGS 84 (SRID 4326)
-    geo_point = ST_SetSRID(ST_MakePoint(lon, lat), 4326)
-
-    # Ищем, в какой полигон района попадает наша точка
-    district_query = await db.execute(select(District).where(ST_Contains(District.polygon, geo_point)))
-    district = district_query.scalars().first()
-    district_id = district.id if district else None
-
-    new_report = Report(
-        user_id=current_user.id,
-        district_id=district_id,
-        category=report_data.category,
-        description=report_data.description,
-        # EWKT-строка: явный SRID, иначе PostGIS сохранит точку без привязки к системе координат
-        location=f"SRID=4326;POINT({lon} {lat})",
-        status="NEW",
-    )
-    db.add(new_report)
-    await db.commit()
-
-    # Повторный SELECT со связями: в async-режиме ленивая загрузка запрещена,
-    # поэтому attachments и вычисляемые lat/lon подгружаем сразу (selectinload)
-    result = await db.execute(
-        select(Report)
-        .where(Report.id == new_report.id)
-        .options(selectinload(Report.attachments))
-    )
-    created_report = result.scalars().one()
-
-    return ReportOut.model_validate(created_report)
-
-@router.get("/reports", response_model=list[ReportOut])
-async def get_all_reports(district_id: int | None = None, db: AsyncSession = Depends(get_db)):
-    """Получение всех жалоб в городе для вывода меток на Яндекс Карту."""
-    # selectinload сразу подтягивает вложения, иначе Pydantic упадет с MissingGreenlet
-    query = select(Report).options(selectinload(Report.attachments))
-    if district_id:
-        query = query.where(Report.district_id == district_id)
-
-    result = await db.execute(query)
-    return result.scalars().all()
-
-@router.get("/reports/my", response_model=list[ReportOut])
-async def get_my_reports(db: AsyncSession = Depends(get_db), current_user: User = allow_residents):
-    """Личный кабинет: список жалоб, отправленных текущим пользователем."""
-    result = await db.execute(
-        select(Report)
-        .where(Report.user_id == current_user.id)
-        .options(selectinload(Report.attachments))
-    )
-    return result.scalars().all()
-
-@router.patch("/reports/{id}", response_model=ReportOut)
-async def update_report(id: int, description: str, db: AsyncSession = Depends(get_db), current_user: User = allow_residents):
-    """Редактирование текста жалобы её автором (Update)."""
-    result = await db.execute(
-        select(Report)
-        .where(Report.id == id, Report.user_id == current_user.id)
-        .options(selectinload(Report.attachments))
-    )
-    report = result.scalars().first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Обращение не найдено или у вас нет прав на его редактирование")
-
-    report.description = description
-    await db.commit()
-    return report
-
-@router.delete("/reports/{id}", status_code=status.HTTP_200_OK)
-async def delete_report(id: int, db: AsyncSession = Depends(get_db), current_user: User = allow_residents):
-    """Удаление жалобы автором или администратором системы (Delete)."""
-    query = select(Report).where(Report.id == id)
-    # Регистронезависимо, как в RoleChecker: "Admin"/"ADMIN" тоже должны иметь права
-    if (current_user.role or "").lower() != "admin":
-        query = query.where(Report.user_id == current_user.id)
-
-    result = await db.execute(query)
-    report = result.scalars().first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Обращение не найдено")
-
-    await db.delete(report)
-    await db.commit()
-    return {"status": "success", "message": "Жалоба успешно удалена из системы"}
 
 # --- БЛОК ОПРОСОВ (SURVEYS) ---
+# (тело опросов без изменений - рефакторим на этапе сущности #2)
 
 @router.post("/surveys", response_model=SurveyOut, status_code=status.HTTP_201_CREATED)
 async def create_survey(survey_data: SurveyCreate, db: AsyncSession = Depends(get_db), _=allow_authors):
@@ -132,7 +37,6 @@ async def create_survey(survey_data: SurveyCreate, db: AsyncSession = Depends(ge
 
     await db.commit()
 
-    # Повторный SELECT с деревом связей survey -> questions -> options
     result = await db.execute(
         select(Survey)
         .where(Survey.id == new_survey.id)
