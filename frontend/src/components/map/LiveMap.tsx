@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { YMaps, Map, Polygon, Placemark } from '@pbe/react-yandex-maps';
 import { fetchDistricts } from '../../api/maps';
+import { fetchSensors } from '../../api/sensors';
 import { fetchReports } from '../../api/reports';
 import { getToken } from '../../api/client';
 import { geojsonToYandex, polygonCenter, KALUGA_CENTER } from '../../utils/geo';
-import type { District, Report } from '../../types/api';
+import type { District, Report, Sensor } from '../../types/api';
 import { ReportMarkers } from './ReportMarkers';
+import { SensorMarkers } from './SensorMarker';
 
 const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
 
@@ -25,6 +27,8 @@ export function LiveMap({
 }: LiveMapProps) {
   const [districts, setDistricts] = useState<District[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  // ДОБАВЛЕНО (Этап 4): датчики с реальными координатами
+  const [sensors, setSensors] = useState<Sensor[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // Инстанс карты — нужен для управления курсором
@@ -47,6 +51,22 @@ export function LiveMap({
     return () => { alive = false; clearInterval(timer); };
   }, []);
 
+  // ДОБАВЛЕНО (Этап 4): загрузка датчиков + поллинг (карта «живёт»)
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const data = await fetchSensors();
+        if (alive) setSensors(data);
+      } catch {
+        if (alive) setSensors([]);
+      }
+    };
+    load();
+    const timer = setInterval(load, 30_000);
+    return () => { alive = false; clearInterval(timer); };
+  }, []);
+
   useEffect(() => {
     if (!getToken()) return;
     let alive = true;
@@ -56,8 +76,7 @@ export function LiveMap({
     return () => { alive = false; };
   }, [refreshKey]);
 
-  // Курсор на ВСЕЙ карте: crosshair в режиме жалобы, иначе grab
-    // Курсор на ВСЕЙ карте через CursorManager: push() при входе, pop() при выходе.
+  // Курсор на ВСЕЙ карте через CursorManager: push() при входе, pop() при выходе.
   // ВАЖНО: у CursorManager нет remove(key) — только push()/pop().
   useEffect(() => {
     const cursors = mapInstance?.cursors;
@@ -75,6 +94,12 @@ export function LiveMap({
     const all = districts.flatMap((d) => geojsonToYandex(d.polygon_geojson));
     return polygonCenter(all);
   }, [districts]);
+
+  // ДОБАВЛЕНО (Этап 4): карта id района → имя (для балунов датчиков)
+  const districtNames = useMemo<Record<number, string>>(
+    () => Object.fromEntries(districts.map((d) => [d.id, d.name])),
+    [districts],
+  );
 
   const pickFromEvent = (e: MapEvent) => {
     const coords = e.get('coords') as [number, number] | undefined;
@@ -102,6 +127,7 @@ export function LiveMap({
           defaultState={{ center, zoom: 12 }}
           width="100%"
           height="100%"
+          modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
           options={{ suppressMapOpenBlock: true }}
           onClick={(e: MapEvent) => { if (reportMode) pickFromEvent(e); }}
         >
@@ -128,6 +154,14 @@ export function LiveMap({
               />
             );
           })}
+
+          {/* ДОБАВЛЕНО (Этап 4): датчики */}
+          <SensorMarkers
+            sensors={sensors}
+            reportMode={reportMode}
+            onPick={onMapPick}
+            districtNames={districtNames}
+          />
 
           <ReportMarkers reports={reports} reportMode={reportMode} onPick={onMapPick} />
 

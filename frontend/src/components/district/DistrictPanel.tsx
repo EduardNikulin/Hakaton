@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { fetchDistrictStats } from '../../api/maps';
-import type { District, EciStats } from '../../types/api';
+import { fetchDistrictStats, fetchDistrictHistory } from '../../api/maps';
+import type { District, EciStats, EciHistoryPoint } from '../../types/api';
+import { DistrictChart } from './DistrictChart';
 
 interface Props {
   district: District;
@@ -19,6 +20,10 @@ export function DistrictPanel({ district, onClose }: Props) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(false);
 
+  // ДОБАВЛЕНО (Этап 4): история ECI для графика динамики
+  const [history, setHistory] = useState<EciHistoryPoint[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
   useEffect(() => {
     let alive = true;
     setStatsLoading(true);
@@ -27,6 +32,16 @@ export function DistrictPanel({ district, onClose }: Props) {
       .then((s) => { if (alive) setStats(s); })
       .catch(() => { if (alive) { setStats(null); setStatsError(true); } })
       .finally(() => { if (alive) setStatsLoading(false); });
+    return () => { alive = false; };
+  }, [district.id]);
+
+  useEffect(() => {
+    let alive = true;
+    setHistoryLoading(true);
+    fetchDistrictHistory(district.id)
+      .then((h) => { if (alive) setHistory(h); })
+      .catch(() => { if (alive) setHistory([]); })
+      .finally(() => { if (alive) setHistoryLoading(false); });
     return () => { alive = false; };
   }, [district.id]);
 
@@ -68,6 +83,12 @@ export function DistrictPanel({ district, onClose }: Props) {
           ))}
         </div>
       )}
+
+      {/* ДОБАВЛЕНО (Этап 4): динамика ECI */}
+      <h3 style={{ fontSize: 14, color: '#94a3b8', margin: '20px 0 10px' }}>Динамика ECI</h3>
+      {historyLoading
+        ? <div style={{ color: '#64748b', fontSize: 13 }}>Загрузка…</div>
+        : <DistrictChart data={history} />}
     </aside>
   );
 }

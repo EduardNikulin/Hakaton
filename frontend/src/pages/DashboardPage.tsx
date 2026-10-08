@@ -66,6 +66,9 @@ export function DashboardPage() {
         <Legend color="#22c55e" label="≥ 75 — чисто" />
         <Legend color="#f59e0b" label="≥ 50 — средне" />
         <Legend color="#ef4444" label="< 50 — плохо" />
+        <span style={{ marginLeft: 24, fontWeight: 600 }}>Датчики:</span>
+        <Legend color="#6366f1" label="воздух" />
+        <Legend color="#06b6d4" label="вода" />
         <span style={{ marginLeft: 24, fontWeight: 600 }}>Жалобы:</span>
         <Legend color="#3b82f6" label="новая" />
         <Legend color="#fbbf24" label="в работе" />
