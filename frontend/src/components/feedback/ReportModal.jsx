@@ -9,19 +9,38 @@ const CATEGORIES = [
   { value: 'other',     label: 'Другое' },
 ];
 
+const MIN_LENGTH = 5;
+
 export default function ReportModal({ point, onClose, onSubmit }) {
   const [category, setCategory] = useState('smell');
   const [text, setText] = useState('');
   const [photoName, setPhotoName] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = () => {
-    if (!text.trim()) return;
-    onSubmit({
-      category: CATEGORIES.find(c => c.value === category).label,
-      text,
-      coords: [point.lat, point.lon],
-      photoName,
-    });
+  const trimmedLength = text.trim().length;
+  const isValid = trimmedLength >= MIN_LENGTH;
+  const remaining = MIN_LENGTH - trimmedLength;
+
+  const handleSubmit = async () => {
+    if (!isValid) {
+      setError(`Описание должно быть минимум ${MIN_LENGTH} символов`);
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({
+        category: CATEGORIES.find(c => c.value === category).label,
+        text,
+        coords: [point.lat, point.lon],
+        photoName,
+      });
+    } catch (err) {
+      setError(err.message || 'Не удалось отправить жалобу');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -86,14 +105,27 @@ export default function ReportModal({ point, onClose, onSubmit }) {
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder="Опишите проблему: что, где, когда..."
+            placeholder={`Опишите проблему подробнее (минимум ${MIN_LENGTH} символов)...`}
             rows={4}
             style={{
               width: '100%', padding: 12, borderRadius: 10,
-              border: '1px solid #e5e7eb', fontSize: 14, resize: 'vertical',
+              border: `1px solid ${trimmedLength > 0 && !isValid ? '#fca5a5' : '#e5e7eb'}`,
+              fontSize: 14, resize: 'vertical',
               fontFamily: 'inherit', boxSizing: 'border-box',
             }}
           />
+          <div style={{
+            fontSize: 11,
+            marginTop: 6,
+            textAlign: 'right',
+            color: trimmedLength === 0 ? '#9ca3af' : (isValid ? '#22c55e' : '#ef4444'),
+          }}>
+            {trimmedLength === 0
+              ? `минимум ${MIN_LENGTH} символов`
+              : isValid
+                ? `${trimmedLength} символов ✓`
+                : `Ещё ${remaining} ${remaining === 1 ? 'символ' : remaining < 5 ? 'символа' : 'символов'}`}
+          </div>
         </div>
 
         {/* Фото (без реальной загрузки) */}
@@ -115,28 +147,41 @@ export default function ReportModal({ point, onClose, onSubmit }) {
           </label>
         </div>
 
+        {/* Ошибка */}
+        {error && (
+          <div style={{
+            background: '#fee2e2', color: '#dc2626',
+            padding: 10, borderRadius: 10, fontSize: 13, marginBottom: 16,
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* Кнопки */}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
+            disabled={submitting}
             style={{
               padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: 'white', color: '#374151', border: '1px solid #e5e7eb', cursor: 'pointer',
+              background: 'white', color: '#374151', border: '1px solid #e5e7eb',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              opacity: submitting ? 0.6 : 1,
             }}
           >
             Отмена
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!text.trim()}
+            disabled={!isValid || submitting}
             style={{
               padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: text.trim() ? '#22c55e' : '#d1d5db',
+              background: isValid && !submitting ? '#22c55e' : '#d1d5db',
               color: 'white', border: 'none',
-              cursor: text.trim() ? 'pointer' : 'not-allowed',
+              cursor: isValid && !submitting ? 'pointer' : 'not-allowed',
             }}
           >
-            Отправить
+            {submitting ? 'Отправляем...' : 'Отправить'}
           </button>
         </div>
       </div>

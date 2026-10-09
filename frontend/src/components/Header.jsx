@@ -1,8 +1,11 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Leaf, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Leaf, User, LogIn, LogOut, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated, loading } = useAuth();
 
   const linkStyle = (path) => ({
     padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
@@ -10,6 +13,11 @@ export default function Header() {
     color: pathname === path ? '#fff' : 'var(--text-secondary)',
     background: pathname === path ? '#22c55e' : 'transparent',
   });
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <header style={{
@@ -23,6 +31,7 @@ export default function Header() {
         maxWidth: 1280, margin: '0 auto', padding: '0 24px',
         height: 64, display: 'flex', alignItems: 'center', gap: 24,
       }}>
+        {/* Логотип */}
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
@@ -36,13 +45,73 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav style={{ display: 'flex', gap: 4 }}>
+        {/* Навигация */}
+        <nav style={{ display: 'flex', gap: 4, flex: 1 }}>
           <Link to="/" style={linkStyle('/')}>Карта</Link>
           <Link to="/surveys" style={linkStyle('/surveys')}>Опросы</Link>
-          <Link to="/profile" style={{ ...linkStyle('/profile'), display: 'flex', alignItems: 'center', gap: 6 }}>
-            <User size={16} /> Кабинет
-          </Link>
+
+          {isAuthenticated && (
+            <Link
+              to="/profile"
+              style={{ ...linkStyle('/profile'), display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <User size={16} /> Кабинет
+            </Link>
+          )}
+
+          {/* Только для админа */}
+          {user?.role === 'admin' && (
+            <Link
+              to="/operator"
+              style={{ ...linkStyle('/operator'), display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <AlertTriangle size={16} /> Инциденты
+            </Link>
+          )}
         </nav>
+
+        {/* Кнопки справа */}
+        {loading ? (
+          <div style={{
+            width: 160, height: 36, borderRadius: 10,
+            background: 'var(--bg-secondary)',
+            opacity: 0.5,
+          }} />
+        ) : isAuthenticated ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 13, color: 'var(--text-secondary)',
+            }}>
+              <User size={14} />
+              {user?.email?.split('@')[0] ?? 'Пользователь'}
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px', borderRadius: 10,
+                background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
+                border: '1px solid var(--border)', cursor: 'pointer',
+                fontSize: 13, fontWeight: 500,
+              }}
+            >
+              <LogOut size={14} /> Выйти
+            </button>
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 10,
+              background: '#22c55e', color: '#fff',
+              textDecoration: 'none', fontSize: 14, fontWeight: 600,
+            }}
+          >
+            <LogIn size={16} /> Войти
+          </Link>
+        )}
       </div>
     </header>
   );

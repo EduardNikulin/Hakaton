@@ -23,4 +23,17 @@ export const api = {
     if (!res.ok) throw new Error(`API ${res.status}: ${url}`);
     return res.json();
   },
+  async patch(url, body) {
+    const token = localStorage.getItem('token');
+    const res = await fetch(BASE + url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`API ${res.status}: ${url}`);
+    return res.json();
+  },
 };

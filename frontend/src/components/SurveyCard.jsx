@@ -1,63 +1,68 @@
 import { Link } from 'react-router-dom';
-import { Users, Clock, CheckCircle } from 'lucide-react';
-import { districts } from '../data/mockData';
+import { MapPin, Users, CheckCircle, Clock } from 'lucide-react';
 
 export default function SurveyCard({ survey }) {
-  const district = districts.find((d) => d.id === survey.districtId);
-  const progress = Math.round((survey.responses / survey.targetResponses) * 100);
-  const isActive = survey.status === 'active';
+  const isActive = survey.is_active;
+  const questionsCount = survey.questions?.length ?? 0;
 
   return (
-    <Link to={`/surveys/${survey.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div
-        style={{
-          background: 'var(--bg-card)', borderRadius: 16, padding: 24,
-          boxShadow: '0 1px 3px var(--shadow)', border: '1px solid var(--border)',
-          transition: 'all .2s', cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = '0 4px 12px var(--shadow-lg)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = '0 1px 3px var(--shadow)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>
-            {survey.title}
-          </h3>
-          <span style={{
-            padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            background: isActive ? 'var(--green-bg)' : 'var(--bg-secondary)',
-            color: isActive ? '#22c55e' : 'var(--text-muted)', whiteSpace: 'nowrap',
-          }}>
-            {isActive ? 'Активен' : 'Завершён'}
-          </span>
+    <Link
+      to={`/surveys/${survey.id}`}
+      style={{
+        display: 'block',
+        background: 'var(--bg-card)',
+        borderRadius: 20,
+        padding: 24,
+        border: '1px solid var(--border)',
+        textDecoration: 'none',
+        transition: 'border-color .2s, transform .15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = '#22c55e';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 12 }}>
+        <h3 style={{
+          fontSize: 18, fontWeight: 700, margin: 0, flex: 1,
+          color: 'var(--text-primary)', lineHeight: 1.35,
+        }}>
+          {survey.title}
+        </h3>
+
+        <div style={{
+          fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8,
+          background: isActive ? 'var(--green-bg)' : 'var(--bg-secondary)',
+          color: isActive ? '#166534' : 'var(--text-secondary)',
+          border: `1px solid ${isActive ? 'var(--green-border)' : 'var(--border)'}`,
+          whiteSpace: 'nowrap', flexShrink: 0,
+        }}>
+          {isActive ? 'Активен' : 'Завершён'}
         </div>
-        <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          {survey.description}
-        </p>
-        <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
-          <span>📍 {district?.name || '—'}</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Users size={14} /> {survey.responses} ответов</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {isActive ? <Clock size={14} /> : <CheckCircle size={14} />}
-            {isActive ? 'Активен' : 'Завершён'}
-          </span>
-        </div>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-            <span>Прогресс</span><span>{progress}%</span>
-          </div>
-          <div style={{ height: 6, borderRadius: 3, background: 'var(--bg-secondary)' }}>
-            <div style={{
-              height: '100%', borderRadius: 3, width: `${Math.min(progress, 100)}%`,
-              background: 'linear-gradient(90deg,#22c55e,#0ea5e9)',
-            }} />
-          </div>
-        </div>
+      </div>
+
+      <p style={{
+        fontSize: 14, color: 'var(--text-secondary)',
+        margin: '0 0 16px 0', lineHeight: 1.5,
+      }}>
+        {survey.description}
+      </p>
+
+      <div style={{
+        display: 'flex', gap: 20, fontSize: 13,
+        color: 'var(--text-muted)', flexWrap: 'wrap',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <CheckCircle size={14} /> {questionsCount} {questionsCount === 1 ? 'вопрос' : questionsCount < 5 ? 'вопроса' : 'вопросов'}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Clock size={14} />
+          {new Date(survey.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
       </div>
     </Link>
   );

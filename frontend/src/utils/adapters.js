@@ -153,3 +153,25 @@ export function buildReports(backendReports) {
 }
 
 export { UNIT_MAP, METRIC_LABEL };
+// Цвет датчика по значению (как в старой визуализации)
+export function sensorColor(sensor) {
+  const { type, allMetrics } = sensor;
+  if (!allMetrics) return '#6b7280'; // серый — нет данных
+
+  if (type === 'water') {
+    const ph = allMetrics.ph;
+    if (ph == null) return '#6b7280';
+    if (ph >= 7.5) return '#22c55e';
+    if (ph >= 6.5) return '#fbbf24';
+    if (ph >= 5.5) return '#f97316';
+    return '#ef4444';
+  }
+
+  // Воздух — по PM2.5
+  const pm25 = allMetrics.pm25;
+  if (pm25 == null) return '#6b7280';
+  if (pm25 < 25) return '#22c55e';
+  if (pm25 < 50) return '#fbbf24';
+  if (pm25 < 75) return '#f97316';
+  return '#ef4444';
+}

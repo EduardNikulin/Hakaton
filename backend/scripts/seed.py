@@ -10,7 +10,8 @@ Seed идемпотентный:
 - существующие округа не дублируются;
 - существующие пользователи не дублируются;
 - существующие датчики не дублируются;
-- демонстрационные измерения добавляются только для новых датчиков.
+- демонстрационные измерения добавляются только для новых датчиков;
+- существующие опросы не дублируются.
 
 Важно:
 официальное территориальное деление Калуги состоит из трёх округов:
@@ -18,7 +19,7 @@ Seed идемпотентный:
 
 Полигоны округов ниже являются демонстрационными геометриями
 для работы PostGIS/ST_Contains и карты. Это не официальные
-кадастровые границы.
+кадастровые границы. Полигоны НЕ пересекаются.
 """
 
 from __future__ import annotations
@@ -32,9 +33,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
-# Позволяем запускать:
-# python scripts/seed.py
-# находясь в backend/
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
@@ -45,13 +43,10 @@ from app.models.core import City, District
 from app.models.feedback import Report
 from app.models.incidents import Incident
 from app.models.sensors import Sensor, SensorMeasurement
+from app.models.surveys import Survey, Question, QuestionOption
 from app.models.users import User
 from app.utils.security import hash_password
 
-
-# ---------------------------------------------------------------------------
-# Настройки
-# ---------------------------------------------------------------------------
 
 CITY_NAME = "Калуга"
 
@@ -63,40 +58,45 @@ SEED_PASSWORDS = {
 
 
 # ---------------------------------------------------------------------------
-# Геометрии
+# Геометрии — три непересекающихся прямоугольника
+# ---------------------------------------------------------------------------
+#
+# Сетка вокруг Калуги (центр: 54.5293, 36.2754):
+#
+#   ┌──────────────┬──────────────┐
+#   │  Московский  │              │
+#   ├──────────────┤  Октябрьский │
+#   │  Ленинский   │              │
+#   └──────────────┴──────────────┘
+#
 # ---------------------------------------------------------------------------
 
 DISTRICTS = [
-    {
-        "name": "Ленинский округ",
-        "eci_score": 22.0,
-        "color_hex": "#34d399",
-        "polygon": (
-            "POLYGON(("
-            "36.2450 54.5450, "
-            "36.2750 54.5550, "
-            "36.3050 54.5480, "
-            "36.3150 54.5250, "
-            "36.3000 54.5050, "
-            "36.2700 54.5050, "
-            "36.2450 54.5200, "
-            "36.2450 54.5450"
-            "))"
-        ),
-    },
     {
         "name": "Московский округ",
         "eci_score": 55.0,
         "color_hex": "#fbbf24",
         "polygon": (
             "POLYGON(("
-            "36.2050 54.5650, "
-            "36.2450 54.5700, "
-            "36.2750 54.5550, "
-            "36.2450 54.5450, "
-            "36.2200 54.5350, "
-            "36.2000 54.5450, "
-            "36.2050 54.5650"
+            "36.2000 54.5800, "
+            "36.2800 54.5800, "
+            "36.2800 54.5400, "
+            "36.2000 54.5400, "
+            "36.2000 54.5800"
+            "))"
+        ),
+    },
+    {
+        "name": "Ленинский округ",
+        "eci_score": 22.0,
+        "color_hex": "#34d399",
+        "polygon": (
+            "POLYGON(("
+            "36.2000 54.5400, "
+            "36.2800 54.5400, "
+            "36.2800 54.5000, "
+            "36.2000 54.5000, "
+            "36.2000 54.5400"
             "))"
         ),
     },
@@ -106,22 +106,16 @@ DISTRICTS = [
         "color_hex": "#ef4444",
         "polygon": (
             "POLYGON(("
-            "36.2750 54.5550, "
-            "36.3150 54.5480, "
-            "36.3450 54.5300, "
-            "36.3350 54.5000, "
-            "36.3000 54.5050, "
-            "36.3150 54.5250, "
-            "36.2750 54.5550"
+            "36.2800 54.5800, "
+            "36.3600 54.5800, "
+            "36.3600 54.5000, "
+            "36.2800 54.5000, "
+            "36.2800 54.5800"
             "))"
         ),
     },
 ]
 
-
-# ---------------------------------------------------------------------------
-# Пользователи
-# ---------------------------------------------------------------------------
 
 USERS = [
     {"email": "resident@ecocity.local", "password": SEED_PASSWORDS["resident"], "role": "resident"},
@@ -131,34 +125,27 @@ USERS = [
 
 
 # ---------------------------------------------------------------------------
-# Датчики
+# Датчики — все внутри соответствующих полигонов
 # ---------------------------------------------------------------------------
 
 SENSORS = [
-    {"name": "AIR-001 Центр",         "sensor_type": "air",   "lat": 54.5293, "lon": 36.2754, "status": "ACTIVE"},
-    {"name": "AIR-002 Московская",    "sensor_type": "air",   "lat": 54.5468, "lon": 36.2462, "status": "ACTIVE"},
-    {"name": "AIR-003 Грабцевское",   "sensor_type": "air",   "lat": 54.5255, "lon": 36.3160, "status": "ACTIVE"},
-    {"name": "AIR-004 Правый берег",  "sensor_type": "air",   "lat": 54.5348, "lon": 36.3032, "status": "ACTIVE"},
-    {"name": "AIR-005 Северный",      "sensor_type": "air",   "lat": 54.5542, "lon": 36.2285, "status": "ACTIVE"},
-    {"name": "AIR-006 Терепец",       "sensor_type": "air",   "lat": 54.5110, "lon": 36.2505, "status": "ACTIVE"},
-    {"name": "AIR-007 Анненки",       "sensor_type": "air",   "lat": 54.5138, "lon": 36.2915, "status": "ACTIVE"},
-    {"name": "WATER-001 Ока Центр",   "sensor_type": "water", "lat": 54.5160, "lon": 36.2710, "status": "ACTIVE"},
-    {"name": "WATER-002 Ока Восток",  "sensor_type": "water", "lat": 54.5100, "lon": 36.3150, "status": "ACTIVE"},
-    {"name": "WATER-003 Ока Запад",   "sensor_type": "water", "lat": 54.5220, "lon": 36.2350, "status": "ACTIVE"},
+    # ── Ленинский (lon 36.20–36.28, lat 54.50–54.54) ──
+    {"name": "AIR-001 Центр",         "sensor_type": "air",   "lat": 54.5220, "lon": 36.2300, "status": "ACTIVE"},
+    {"name": "AIR-006 Терепец",       "sensor_type": "air",   "lat": 54.5080, "lon": 36.2650, "status": "ACTIVE"},
+    {"name": "WATER-001 Ока Центр",   "sensor_type": "water", "lat": 54.5150, "lon": 36.2100, "status": "ACTIVE"},
+
+    # ── Московский (lon 36.20–36.28, lat 54.54–54.58) ──
+    {"name": "AIR-002 Московская",    "sensor_type": "air",   "lat": 54.5480, "lon": 36.2300, "status": "ACTIVE"},
+    {"name": "AIR-005 Северный",      "sensor_type": "air",   "lat": 54.5650, "lon": 36.2600, "status": "ACTIVE"},
+    {"name": "AIR-007 Анненки",       "sensor_type": "air",   "lat": 54.5550, "lon": 36.2200, "status": "ACTIVE"},
+    {"name": "WATER-003 Ока Запад",   "sensor_type": "water", "lat": 54.5450, "lon": 36.2700, "status": "ACTIVE"},
+
+    # ── Октябрьский (lon 36.28–36.36, lat 54.50–54.58) ──
+    {"name": "AIR-003 Грабцевское",   "sensor_type": "air",   "lat": 54.5300, "lon": 36.3200, "status": "ACTIVE"},
+    {"name": "AIR-004 Правый берег",  "sensor_type": "air",   "lat": 54.5500, "lon": 36.3400, "status": "ACTIVE"},
+    {"name": "WATER-002 Ока Восток",  "sensor_type": "water", "lat": 54.5150, "lon": 36.3300, "status": "ACTIVE"},
 ]
 
-
-# ---------------------------------------------------------------------------
-# Измерения — У КАЖДОГО ДАТЧИКА СВОИ ЗНАЧЕНИЯ
-# ---------------------------------------------------------------------------
-#
-# Логика:
-#   - Ленинский округ → чистый воздух (PM2.5 = 8-9)
-#   - Московский округ → средний (PM2.5 = 22-26)
-#   - Октябрьский округ → грязный (PM2.5 = 78-95)
-#
-# Это даёт разный ECI у районов и разные цвета полигонов.
-# ---------------------------------------------------------------------------
 
 SENSOR_MEASUREMENTS = {
     # ── Ленинский округ (чисто) ──
@@ -174,8 +161,8 @@ SENSOR_MEASUREMENTS = {
         ("pm25", 7.8), ("pm10", 13.5), ("no2", 10.2), ("co", 0.25),
         ("temperature", 11.5), ("humidity", 66.0), ("noise", 47.0),
     ],
-    "WATER-003 Ока Запад": [
-        ("temperature", 10.2), ("ph", 7.5), ("turbidity", 1.8),
+    "WATER-001 Ока Центр": [
+        ("temperature", 10.5), ("ph", 7.2), ("turbidity", 2.0),
     ],
 
     # ── Московский округ (средне) ──
@@ -187,7 +174,9 @@ SENSOR_MEASUREMENTS = {
         ("pm25", 25.4), ("pm10", 42.1), ("no2", 30.5), ("co", 0.55),
         ("temperature", 13.5), ("humidity", 68.0), ("noise", 60.0),
     ],
-
+        "WATER-003 Ока Запад": [
+        ("temperature", 10.2), ("ph", 7.3), ("turbidity", 2.5),
+],
     # ── Октябрьский округ (грязно) ──
     "AIR-003 Грабцевское": [
         ("pm25", 78.2), ("pm10", 120.5), ("no2", 65.0), ("co", 1.20),
@@ -197,13 +186,57 @@ SENSOR_MEASUREMENTS = {
         ("pm25", 92.5), ("pm10", 145.0), ("no2", 72.0), ("co", 1.50),
         ("temperature", 14.5), ("humidity", 73.0), ("noise", 78.0),
     ],
-    "WATER-001 Ока Центр": [
-        ("temperature", 10.5), ("ph", 6.4), ("turbidity", 5.2),
-    ],
     "WATER-002 Ока Восток": [
         ("temperature", 10.8), ("ph", 6.1), ("turbidity", 6.0),
     ],
 }
+
+
+# ---------------------------------------------------------------------------
+# Опросы
+# ---------------------------------------------------------------------------
+
+SURVEYS = [
+    {
+        "title": "Качество воздуха в вашем районе",
+        "description": "Оцените, как вы чувствуете качество воздуха в повседневной жизни",
+        "is_active": True,
+        "questions": [
+            {
+                "text": "Как часто вы замечаете неприятные запахи на улице?",
+                "question_type": "single_choice",
+                "options": ["Никогда", "Редко", "Иногда", "Часто", "Постоянно"],
+            },
+            {
+                "text": "Замечали ли вы ухудшение самочувствия в дни с высоким загрязнением?",
+                "question_type": "single_choice",
+                "options": ["Да", "Нет", "Не уверен(а)"],
+            },
+            {
+                "text": "Ваши предложения по улучшению качества воздуха",
+                "question_type": "text",
+                "options": [],
+            },
+        ],
+    },
+    {
+        "title": "Состояние водоёмов",
+        "description": "Помогите оценить экологическое состояние рек и прудов",
+        "is_active": True,
+        "questions": [
+            {
+                "text": "Как вы оцениваете чистоту ближайшего водоёма?",
+                "question_type": "single_choice",
+                "options": ["Очень чистый", "Чистый", "Умеренно загрязнён", "Грязный", "Очень грязный"],
+            },
+            {
+                "text": "Замечали ли вы мёртвую рыбу или необычный цвет воды?",
+                "question_type": "single_choice",
+                "options": ["Да, регулярно", "Иногда", "Один раз", "Никогда"],
+            },
+        ],
+    },
+]
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +270,11 @@ async def get_or_create_district(db: AsyncSession, city: City, data: dict) -> Di
     )
     district = result.scalar_one_or_none()
     if district:
-        print(f"[OK] Округ уже существует: {district.name}")
+        # Обновляем геометрию на случай, если она менялась
+        district.polygon = polygon_wkt(data["polygon"])
+        district.eci_score = data["eci_score"]
+        district.color_hex = data["color_hex"]
+        print(f"[OK] Округ уже существует (обновлён): {district.name}")
         return district
     district = District(
         city_id=city.id,
@@ -293,10 +330,16 @@ def find_district_for_point(lat: float, lon: float, districts: list[District]) -
 async def get_or_create_sensor(db: AsyncSession, data: dict, districts: list[District]) -> Sensor:
     result = await db.execute(select(Sensor).where(Sensor.name == data["name"]))
     sensor = result.scalar_one_or_none()
-    if sensor:
-        print(f"[OK] Датчик уже существует: {sensor.name}")
-        return sensor
+
     district = find_district_for_point(data["lat"], data["lon"], districts)
+
+    if sensor:
+        # Обновляем привязку к району и координаты
+        sensor.district_id = district.id if district else None
+        sensor.location = point_wkt(data["lat"], data["lon"])
+        print(f"[OK] Датчик уже существует (обновлён): {sensor.name}")
+        return sensor
+
     sensor = Sensor(
         district_id=district.id if district else None,
         name=data["name"],
@@ -312,15 +355,11 @@ async def get_or_create_sensor(db: AsyncSession, data: dict, districts: list[Dis
 
 
 async def seed_measurements(db: AsyncSession, sensors: list[Sensor]) -> None:
-    """Добавляет измерения из SENSOR_MEASUREMENTS по имени датчика."""
     for sensor in sensors:
         result = await db.execute(
-            select(SensorMeasurement)
-            .where(SensorMeasurement.sensor_id == sensor.id)
-            .limit(1)
+            select(SensorMeasurement).where(SensorMeasurement.sensor_id == sensor.id).limit(1)
         )
-        existing = result.scalar_one_or_none()
-        if existing:
+        if result.scalar_one_or_none():
             print(f"[OK] Измерения уже есть: {sensor.name}")
             continue
 
@@ -336,7 +375,6 @@ async def seed_measurements(db: AsyncSession, sensors: list[Sensor]) -> None:
                 metric_name=metric_name,
                 quality_status="VALID",
             ))
-
         print(f"[+] Добавлены измерения: {sensor.name} ({len(measurements)})")
 
 
@@ -401,10 +439,11 @@ async def seed_incidents(
     reports: list[Report],
     sensors: list[Sensor],
 ) -> None:
+    # districts[0]=Московский, [1]=Ленинский, [2]=Октябрьский
     incidents_data = [
         {
             "title": "Повышенное загрязнение воздуха",
-            "district": districts[2],
+            "district": districts[2],  # Октябрьский
             "confidence_rate": 91.5,
             "status": "CRITICAL",
             "operator_comment": "Автоматически обнаружено по показаниям датчиков качества воздуха.",
@@ -413,12 +452,12 @@ async def seed_incidents(
         },
         {
             "title": "Подозрение на загрязнение воды",
-            "district": districts[2],
+            "district": districts[1],  # Ленинский
             "confidence_rate": 78.0,
             "status": "WARNING",
             "operator_comment": "Требуется дополнительная проверка показаний водных датчиков.",
             "report": reports[1] if len(reports) > 1 else None,
-            "sensor": sensors[7] if len(sensors) > 7 else None,
+            "sensor": sensors[3] if len(sensors) > 3 else None,
         },
     ]
 
@@ -442,6 +481,43 @@ async def seed_incidents(
             incident.sensors.append(data["sensor"])
         db.add(incident)
         print(f"[+] Создан инцидент: {incident.title}")
+
+
+async def seed_surveys(db: AsyncSession) -> None:
+    """Создаёт опросы с вопросами и вариантами ответов."""
+    for survey_data in SURVEYS:
+        result = await db.execute(
+            select(Survey).where(Survey.title == survey_data["title"])
+        )
+        survey = result.scalar_one_or_none()
+        if survey:
+            print(f"[OK] Опрос уже существует: {survey.title}")
+            continue
+
+        survey = Survey(
+            title=survey_data["title"],
+            description=survey_data["description"],
+            is_active=survey_data["is_active"],
+        )
+        db.add(survey)
+        await db.flush()  # получаем survey.id
+
+        for q_data in survey_data["questions"]:
+            question = Question(
+                survey_id=survey.id,
+                text=q_data["text"],
+                question_type=q_data["question_type"],
+            )
+            db.add(question)
+            await db.flush()  # получаем question.id
+
+            for opt_text in q_data["options"]:
+                db.add(QuestionOption(
+                    question_id=question.id,
+                    text=opt_text,
+                ))
+
+        print(f"[+] Создан опрос: {survey.title} ({len(survey_data['questions'])} вопросов)")
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +560,8 @@ async def seed() -> None:
 
             await seed_incidents(db, districts=districts, reports=reports, sensors=sensors)
 
+            await seed_surveys(db)
+
             await db.commit()
 
             print()
@@ -494,6 +572,7 @@ async def seed() -> None:
             print(f"Districts: {len(districts)}")
             print(f"Sensors:   {len(sensors)}")
             print(f"Reports:   {len(reports)}")
+            print(f"Surveys:   {len(SURVEYS)}")
             print()
             print("Demo users:")
             print("  resident@ecocity.local / Resident123!")

@@ -1,225 +1,187 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, User, Palette, Bell, Lock, Eye, EyeOff } from 'lucide-react';
-import Header from '../components/Header';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, User, Palette, Check } from 'lucide-react';
+import { authApi } from '../api/auth';
 import { useTheme } from '../context/ThemeContext';
-import { user as mockUser } from '../data/mockData';
+import Header from '../components/Header';
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
-  // Состояние профиля
-  const [name, setName] = useState(mockUser.name);
-  const [email, setEmail] = useState(mockUser.email);
-  const [showOldPass, setShowOldPass] = useState(false);
-  const [showNewPass, setShowNewPass] = useState(false);
-  const [oldPass, setOldPass] = useState('');
-  const [newPass, setNewPass] = useState('');
-
-  // Состояние уведомлений
-  const [notif, setNotif] = useState({
-    newSurveys: true,
-    results: true,
-    pollution: false,
-  });
-
-  // Сохранение
+  const [user, setUser] = useState(null);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    authApi.me().then(setUser).catch(() => navigate('/login'));
+  }, [navigate]);
+
   const handleSave = () => {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTimeout(() => setSaved(false), 2500);
   };
 
-  const toggleNotif = (key) => {
-    setNotif((prev) => ({ ...prev, [key]: !prev[key] }));
+  const inputStyle = {
+    width: '100%', padding: '12px', borderRadius: 10, fontSize: 14,
+    background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+    border: '1px solid var(--border)', boxSizing: 'border-box',
+    opacity: 0.7, cursor: 'not-allowed',
   };
 
-  // Стили
+  const section = {
+    background: 'var(--bg-card)', borderRadius: 16, padding: 24,
+    border: '1px solid var(--border)', marginBottom: 16,
+  };
+
   const sectionTitle = {
-    fontSize: 13, fontWeight: 600, color: 'var(--text-muted)',
-    textTransform: 'uppercase', letterSpacing: 0.5,
-    marginBottom: 8, paddingLeft: 4,
-  };
-
-  const card = {
-    background: 'var(--bg-card)', borderRadius: 16,
-    boxShadow: `0 1px 3px var(--shadow)`,
-    overflow: 'hidden', marginBottom: 28,
+    fontSize: 12, fontWeight: 700, letterSpacing: '0.05em',
+    color: 'var(--text-muted)', textTransform: 'uppercase',
+    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18,
   };
 
   const row = {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 16px', borderBottom: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', gap: 16,
+    padding: '14px 0', borderBottom: '1px solid var(--border)',
   };
 
-  const rowLast = { ...row, borderBottom: 'none' };
-
-  const label = { fontSize: 15, color: 'var(--text-primary)', fontWeight: 500 };
-
-  const inputStyle = {
-    padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)',
-    background: 'var(--bg)', color: 'var(--text-primary)',
-    fontSize: 14, outline: 'none', width: 220, textAlign: 'right',
+  const label = {
+    flex: 1, fontSize: 14, color: 'var(--text-primary)',
   };
+
+  if (!user) {
+    return (
+      <>
+        <Header />
+        <div style={{
+          minHeight: 'calc(100vh - 64px)', background: 'var(--bg)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text-secondary)',
+        }}>
+          Загрузка...
+        </div>
+      </>
+    );
+  }
+
+  const roleLabel = {
+    resident: 'Житель',
+    author: 'Автор опросов',
+    admin: 'Администратор',
+  }[user.role] ?? user.role;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', transition: 'background .3s' }}>
+    <>
       <Header />
+      <div style={{
+        minHeight: 'calc(100vh - 64px)', background: 'var(--bg)',
+        padding: '24px 24px 48px',
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 24px' }}>
-        {/* Навигация */}
-        <Link to="/profile" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          color: 'var(--text-secondary)', textDecoration: 'none',
-          fontSize: 14, marginBottom: 20, fontWeight: 500,
-        }}>
-          <ArrowLeft size={16} /> Назад к профилю
-        </Link>
+          <Link
+            to="/profile"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              color: 'var(--text-secondary)', fontSize: 13,
+              textDecoration: 'none', marginBottom: 24,
+            }}
+          >
+            <ArrowLeft size={16} /> Назад к профилю
+          </Link>
 
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 28, color: 'var(--text-primary)' }}>
-          ⚙️ Настройки
-        </h1>
+          <h1 style={{
+            fontSize: 28, fontWeight: 700, marginBottom: 24,
+            color: 'var(--text-primary)',
+          }}>
+            ⚙️ Настройки
+          </h1>
 
-        {/* ===== СЕКЦИЯ 1: ПРОФИЛЬ ===== */}
-        <div style={sectionTitle}>👤 Профиль</div>
-        <div style={card}>
-          <div style={row}>
-            <span style={label}>Имя</span>
-            <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div style={row}>
-            <span style={label}>Email</span>
-            <input style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div style={row}>
-            <span style={label}>Старый пароль</span>
-            <div style={{ position: 'relative' }}>
+          {/* Профиль */}
+          <div style={section}>
+            <div style={sectionTitle}>
+              <User size={14} /> Профиль
+            </div>
+
+            <div style={row}>
+              <span style={label}>Email</span>
               <input
-                type={showOldPass ? 'text' : 'password'}
-                style={{ ...inputStyle, paddingRight: 36 }}
-                value={oldPass}
-                onChange={(e) => setOldPass(e.target.value)}
-                placeholder="••••••••"
+                type="text"
+                value={user.email}
+                readOnly
+                style={{ ...inputStyle, width: 260 }}
               />
-              <button
-                type="button"
-                onClick={() => setShowOldPass(!showOldPass)}
-                style={{
-                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
-                }}
-              >
-                {showOldPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
             </div>
-          </div>
-          <div style={rowLast}>
-            <span style={label}>Новый пароль</span>
-            <div style={{ position: 'relative' }}>
+
+            <div style={{ ...row, borderBottom: 'none' }}>
+              <span style={label}>Роль</span>
               <input
-                type={showNewPass ? 'text' : 'password'}
-                style={{ ...inputStyle, paddingRight: 36 }}
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                placeholder="••••••••"
+                type="text"
+                value={roleLabel}
+                readOnly
+                style={{ ...inputStyle, width: 260 }}
               />
-              <button
-                type="button"
-                onClick={() => setShowNewPass(!showNewPass)}
-                style={{
-                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
-                }}
-              >
-                {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
             </div>
           </div>
-        </div>
 
-        {/* ===== СЕКЦИЯ 2: ВНЕШНИЙ ВИД ===== */}
-        <div style={sectionTitle}>🎨 Внешний вид</div>
-        <div style={card}>
-          <div style={rowLast}>
-            <span style={label}>Тема оформления</span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {[
-                { key: 'light', label: '☀️ Светлая' },
-                { key: 'dark', label: '🌙 Тёмная' },
-                { key: 'auto', label: '🔄 Авто' },
-              ].map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => setTheme(opt.key)}
-                  style={{
-                    padding: '8px 14px', borderRadius: 10, border: 'none',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    background: theme === opt.key ? '#22c55e' : 'var(--bg-secondary)',
-                    color: theme === opt.key ? '#fff' : 'var(--text-secondary)',
-                    transition: 'all .2s',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+          {/* Внешний вид */}
+          <div style={section}>
+            <div style={sectionTitle}>
+              <Palette size={14} /> Внешний вид
             </div>
-          </div>
-        </div>
 
-        {/* ===== СЕКЦИЯ 3: УВЕДОМЛЕНИЯ ===== */}
-        <div style={sectionTitle}>🔔 Уведомления</div>
-        <div style={card}>
-          <div style={row}>
-            <div>
-              <div style={label}>Новые опросы в моём районе</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                Получать email при публикации нового опроса
+            <div style={{ ...row, borderBottom: 'none' }}>
+              <span style={label}>Тема оформления</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[
+                  { value: 'light', label: 'Светлая', emoji: '☀️' },
+                  { value: 'dark',  label: 'Тёмная',  emoji: '🌙' },
+                  { value: 'auto',  label: 'Авто',    emoji: '🌗' },
+                ].map(({ value, label: lbl, emoji }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    type="button"
+                    style={{
+                      padding: '8px 14px', borderRadius: 10, fontSize: 13,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: theme === value ? 'var(--accent, #22c55e)' : 'var(--bg-secondary)',
+                      color: theme === value ? '#fff' : 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer', fontWeight: 500,
+                    }}
+                  >
+                    <span>{emoji}</span> {lbl}
+                  </button>
+                ))}
               </div>
             </div>
-            <button
-              className={`toggle ${notif.newSurveys ? 'active' : ''}`}
-              onClick={() => toggleNotif('newSurveys')}
-            />
           </div>
-          <div style={row}>
-            <div>
-              <div style={label}>Результаты моих опросов</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                Уведомление когда опрос завершён
-              </div>
-            </div>
-            <button
-              className={`toggle ${notif.results ? 'active' : ''}`}
-              onClick={() => toggleNotif('results')}
-            />
-          </div>
-          <div style={rowLast}>
-            <div>
-              <div style={label}>Изменения загрязнения</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                Предупреждение при росте AQI
-              </div>
-            </div>
-            <button
-              className={`toggle ${notif.pollution ? 'active' : ''}`}
-              onClick={() => toggleNotif('pollution')}
-            />
-          </div>
-        </div>
 
-        {/* Кнопка сохранения */}
-        <button
-          onClick={handleSave}
-          style={{
-            width: '100%', padding: '14px 0', borderRadius: 12, border: 'none',
-            background: saved ? '#22c55e' : 'linear-gradient(135deg,#22c55e,#0ea5e9)',
-            color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
-            transition: 'all .3s',
-          }}
-        >
-          {saved ? '✅ Сохранено!' : '💾 Сохранить изменения'}
-        </button>
+          {/* Кнопка Сохранить */}
+          <button
+            onClick={handleSave}
+            style={{
+              width: '100%', padding: 16, borderRadius: 14,
+              background: saved
+                ? '#22c55e'
+                : 'linear-gradient(135deg, #22c55e 0%, #0ea5e9 100%)',
+              color: '#fff', border: 'none', fontSize: 15, fontWeight: 600,
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all .2s',
+            }}
+          >
+            {saved ? (
+              <>
+                <Check size={18} /> Сохранено
+              </>
+            ) : (
+              'Сохранить изменения'
+            )}
+          </button>
+
+        </div>
       </div>
-    </div>
+    </>
   );
 }
