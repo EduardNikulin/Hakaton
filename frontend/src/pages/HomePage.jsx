@@ -83,7 +83,7 @@ export default function HomePage() {
   };
 
   const totalSensors = districts.reduce((sum, d) => sum + d.sensors.length, 0);
-  const dangerCount = districts.filter((d) => d.eci_score > 75).length;
+  const dangerCount = districts.filter((d) => d.eci_score < 50).length;
 
   // Уникальные датчики (один датчик может быть в двух районах)
   const uniqueSensors = districts
@@ -278,11 +278,10 @@ export default function HomePage() {
           Шкала ECI:
         </span>
         {[
-          { l: '0–25', c: '#34d399' },
-          { l: '26–50', c: '#fbbf24' },
-          { l: '51–75', c: '#f97316' },
-          { l: '76–100', c: '#ef4444' },
-        ].map((item) => (
+  { l: '0–49',   c: '#ef4444' },  // плохо
+  { l: '50–74',  c: '#f59e0b' },  // средне
+  { l: '75–100', c: '#22c55e' },  // хорошо
+].map((item) => (
           <span
             key={item.l}
             style={{

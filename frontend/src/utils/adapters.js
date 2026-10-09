@@ -1,9 +1,9 @@
 // ── Маппинг ECI → цвет ──
+// ECI от бэка: ВЫШЕ = ЛУЧШЕ
 function eciToColor(eci) {
-  if (eci <= 25) return '#34d399';
-  if (eci <= 50) return '#fbbf24';
-  if (eci <= 75) return '#f97316';
-  return '#ef4444';
+  if (eci >= 75) return '#22c55e';   // хорошо
+  if (eci >= 50) return '#f59e0b';   // средне
+  return '#ef4444';                  // плохо
 }
 
 // ── Единицы измерения ──

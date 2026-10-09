@@ -1,8 +1,29 @@
 import { X, Wind, Droplets } from 'lucide-react';
 import PollutionBadge from './PollutionBadge';
 import SensorChart from './SensorChart';
-import { getStatusColor, getStatusLabel } from '../utils/pollutionUtils';
 
+// Статусы датчиков (упрощённые — бэк пока не отдаёт статусы)
+function getStatusColor(status) {
+  const colors = {
+    good: '#22c55e',
+    normal: '#22c55e',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    suspect: '#f97316',
+  };
+  return colors[status] ?? '#6b7280';
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    good: 'Хорошо',
+    normal: 'Норма',
+    warning: 'Внимание',
+    danger: 'Опасно',
+    suspect: 'Аномалия',
+  };
+  return labels[status] ?? status ?? '—';
+}
 export default function DistrictInfo({ district, onClose }) {
   return (
     <div style={{
