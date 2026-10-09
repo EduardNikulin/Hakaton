@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey, DateTime, Float
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, ForeignKey, DateTime, Float, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship, column_property
 from geoalchemy2 import Geometry
-from app.database import Base
+from app.database import Base, utcnow
 
 
 if TYPE_CHECKING:
@@ -25,6 +25,10 @@ class Sensor(Base):
     measurements: Mapped[List["SensorMeasurement"]] = relationship("SensorMeasurement", back_populates="sensor", cascade="all, delete-orphan")
     incidents: Mapped[List["Incident"]] = relationship("Incident", secondary="incident_sensors", back_populates="sensors")
 
+    # Координаты точки датчика, вычисляемые из геометрии при каждом SELECT
+    lat = column_property(func.ST_Y(location))
+    lon = column_property(func.ST_X(location))
+
 
 class SensorMeasurement(Base):
     __tablename__ = "sensor_measurements"
@@ -34,7 +38,7 @@ class SensorMeasurement(Base):
     value: Mapped[float] = mapped_column(Float, nullable=False)
     metric_name: Mapped[str] = mapped_column(String(50), nullable=False)
     quality_status: Mapped[str] = mapped_column(String(50), default="VALID")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
     sensor: Mapped["Sensor"] = relationship("Sensor", back_populates="measurements")
 
@@ -45,6 +49,6 @@ class EcoIndexHistory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     district_id: Mapped[int] = mapped_column(ForeignKey("districts.id", ondelete="CASCADE"), nullable=False)
     eci_score: Mapped[float] = mapped_column(Float, nullable=False)
-    calculated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    calculated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
     district: Mapped["District"] = relationship("District", back_populates="eci_history")

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, DateTime, Float, Column, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database import Base
+from app.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.models.feedback import Report
@@ -32,7 +32,7 @@ class Incident(Base):
     status: Mapped[str] = mapped_column(String(50), default="CRITICAL")
     confidence_rate: Mapped[float] = mapped_column(Float, default=100.0)
     operator_comment: Mapped[Optional[str]] = mapped_column(String(1000))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
     reports: Mapped[List["Report"]] = relationship("Report", secondary=incident_reports, back_populates="incidents")
