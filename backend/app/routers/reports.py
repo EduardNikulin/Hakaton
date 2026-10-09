@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.users import User
-from app.schemas.feedback import ReportCreate, ReportOut
+from app.schemas.feedback import ReportCreate, ReportOut, ReportUpdate
 from app.services.report_service import ReportService
 
 router = APIRouter(prefix="/api/v1/feedback/reports", tags=["Reports"])
@@ -51,13 +51,14 @@ async def get_my_reports(
 
 @router.patch("/{id}", response_model=ReportOut)
 async def update_report(
-    id: int, description: str,
+    id: int,
+    data: ReportUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Редактирование текста жалобы её автором."""
     return await ReportService(db).update_description(
-        report_id=id, user=current_user, description=description
+        report_id=id, user=current_user, description=data.description
     )
 
 

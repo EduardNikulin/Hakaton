@@ -26,6 +26,10 @@ class ReportCreate(BaseModel):
             raise ValueError("Долгота (longitude) должна быть в диапазоне от -180 до 180")
         return v
 
+class ReportUpdate(BaseModel):
+    """Частичное обновление жалобы (тело PATCH /reports/{id})."""
+    description: str = Field(..., min_length=5, max_length=1000)
+
 class ReportOut(BaseModel):
     """Жалоба в ответе API. location вычисляется из lat/lon модели Report."""
     id: int

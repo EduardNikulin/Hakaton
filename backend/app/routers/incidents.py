@@ -44,7 +44,7 @@ async def get_incident_details(
     _=Depends(get_current_user),
 ):
     """Детальная карточка инцидента: завязанные датчики и жалобы жителей."""
-    incident = await IncidentService(db).get(id)
+    incident = await IncidentService(db).get_or_404(id)
     return _attach_ids(incident)
 
 

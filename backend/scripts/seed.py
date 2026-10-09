@@ -69,8 +69,8 @@ SEED_PASSWORDS = {
 DISTRICTS = [
     {
         "name": "Ленинский округ",
-        "eci_score": 22.0,
-        "color_hex": "#34d399",
+        "eci_score": 85.0,
+        "color_hex": "#22c55e",   # зелёный — чисто
         "polygon": (
             "POLYGON(("
             "36.2450 54.5450, "
@@ -87,7 +87,7 @@ DISTRICTS = [
     {
         "name": "Московский округ",
         "eci_score": 55.0,
-        "color_hex": "#fbbf24",
+        "color_hex": "#f59e0b",   # жёлтый — средне
         "polygon": (
             "POLYGON(("
             "36.2050 54.5650, "
@@ -102,8 +102,8 @@ DISTRICTS = [
     },
     {
         "name": "Октябрьский округ",
-        "eci_score": 88.0,
-        "color_hex": "#ef4444",
+        "eci_score": 22.0,
+        "color_hex": "#ef4444",   # красный — плохо
         "polygon": (
             "POLYGON(("
             "36.2750 54.5550, "

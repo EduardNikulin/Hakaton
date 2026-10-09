@@ -34,6 +34,7 @@ class Incident(Base):
     operator_comment: Mapped[Optional[str]] = mapped_column(String(1000))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=utcnow)
 
     reports: Mapped[List["Report"]] = relationship("Report", secondary=incident_reports, back_populates="incidents")
     sensors: Mapped[List["Sensor"]] = relationship("Sensor", secondary=incident_sensors, back_populates="incidents")

@@ -6,11 +6,12 @@ import { Timeline, type TimelineItem } from '../components/operator/Timeline';
 import { useAuth } from '../context/AuthContext';
 import type { Incident } from '../types/api';
 import { normalizeIncidentStatus, INCIDENT_STATUS_META } from '../utils/status';
+import { normalizeRole } from '../utils/roles';
 
 export function IncidentDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = normalizeRole(user?.role) === 'admin';
 
   const [incident, setIncident] = useState<Incident | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);

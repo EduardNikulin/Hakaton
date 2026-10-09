@@ -1,5 +1,6 @@
 import { Placemark } from '@pbe/react-yandex-maps';
 import type { Report } from '../../types/api';
+import { escapeHtml } from '../../utils/html';
 
 const STATUS_COLOR: Record<string, string> = {
   NEW: '#3b82f6',
@@ -21,8 +22,8 @@ export function ReportMarkers({ reports, reportMode, onPick }: Props) {
           key={r.id}
           geometry={r.location}
           properties={{
-            hintContent: `${r.category} · ${r.status}`,
-            balloonContent: `<b>${r.category}</b><br/>${r.description}<br/>Статус: ${r.status}`,
+            hintContent: `${escapeHtml(r.category)} · ${escapeHtml(r.status)}`,
+            balloonContent: `<b>${escapeHtml(r.category)}</b><br/>${escapeHtml(r.description)}<br/>Статус: ${escapeHtml(r.status)}`,
           }}
           options={{
             preset: 'islands#circleDotIcon',

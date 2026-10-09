@@ -3,7 +3,6 @@
 URL-ы сохранены: /api/v1/maps/districts"""
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.database import get_db
 from app.dependencies import RoleChecker
@@ -36,17 +35,7 @@ async def get_district_eci_explainability(id: int, db: AsyncSession = Depends(ge
 @router.get("/districts/{id}/history")
 async def get_district_eci_history(id: int, db: AsyncSession = Depends(get_db)):
     """История значений ECI района (для графика динамики)."""
-    from app.models.sensors import EcoIndexHistory
-    result = await db.execute(
-        select(EcoIndexHistory.calculated_at, EcoIndexHistory.eci_score)
-        .where(EcoIndexHistory.district_id == id)
-        .order_by(EcoIndexHistory.calculated_at.asc())
-        .limit(100)
-    )
-    return [
-        {"calculated_at": row.calculated_at.isoformat(), "eci_score": row.eci_score}
-        for row in result.all()
-    ]
+    return await DistrictService(db).get_history(id)
 
 
 @router.post("/districts", response_model=DistrictSchema, status_code=201, dependencies=[allow_admin])

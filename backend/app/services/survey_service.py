@@ -28,7 +28,7 @@ class SurveyService:
     async def list_active(self) -> list[Survey]:
         return await self.surveys.list_active()
 
-    
+
 
     async def list_by_creator(self, user_id: int) -> list[Survey]:
         return await self.surveys.list_by_creator(user_id)
@@ -36,17 +36,58 @@ class SurveyService:
     async def get_survey(self, survey_id: int) -> Survey:
         return await self._get_or_404(survey_id)
 
-    async def set_active(self, survey_id: int, is_active: bool) -> None:
+    async def set_active(self, survey_id: int, is_active: bool, user: User) -> None:
         survey = await self._get_or_404(survey_id)
+        self._assert_can_manage(survey, user)
         survey.is_active = is_active
         await self.db.commit()
 
-    async def delete_survey(self, survey_id: int) -> None:
+    async def delete_survey(self, survey_id: int, user: User) -> None:
         survey = await self._get_or_404(survey_id)
+        self._assert_can_manage(survey, user)
         await self.surveys.delete(survey)
         await self.db.commit()
 
-    async def submit_answers(self, user: User, answers: list) -> None:
+    @staticmethod
+    def _assert_can_manage(survey: Survey, user: User) -> None:
+        if (user.role or "").lower() == "admin":
+            return
+        if survey.created_by != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Можно управлять только своими опросами",
+            )
+
+    async def submit_answers(self, user: User, survey_id: int, answers: list) -> None:
+        survey = await self._get_or_404(survey_id)
+        if not survey.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Опрос завершён и недоступен для прохождения",
+            )
+
+        questions = {q.id: q for q in survey.questions}
+        for ans in answers:
+            question = questions.get(ans.question_id)
+            if question is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Вопрос {ans.question_id} не принадлежит этому опросу",
+                )
+            if question.question_type == "text":
+                if not (ans.text_answer and ans.text_answer.strip()):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Пустой ответ на вопрос {question.id}",
+                    )
+            else:
+                valid_options = {o.id for o in question.options}
+                if ans.option_id not in valid_options:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Недопустимый вариант ответа на вопрос {question.id}",
+                    )
+
         await self.surveys.add_answers(user_id=user.id, answers=answers)
         await self.db.commit()
 

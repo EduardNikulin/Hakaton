@@ -2,6 +2,7 @@ import { Placemark } from '@pbe/react-yandex-maps';
 import type { Incident, District } from '../../types/api';
 import { geojsonToYandex, polygonCenter } from '../../utils/geo';
 import { normalizeIncidentStatus } from '../../utils/status';
+import { escapeHtml } from '../../utils/html';
 
 interface Props {
   incidents: Incident[];
@@ -32,14 +33,14 @@ export function IncidentMarkers({ incidents, districts, reportMode, onPick }: Pr
         if (!district) return null;
         const center = polygonCenter(geojsonToYandex(district.polygon_geojson));
         const list = grouped[districtId];
-        const titles = list.map((i) => `• ${i.title}`).join('<br/>');
+        const titles = list.map((i) => `• ${escapeHtml(i.title)}`).join('<br/>');
         return (
           <Placemark
             key={`incident-${districtId}`}
             geometry={center}
             properties={{
-              hintContent: `🚨 Инцидентов: ${list.length} · ${district.name}`,
-              balloonContent: `<b>🚨 ${district.name}</b><br/>${titles}`,
+              hintContent: `🚨 Инцидентов: ${list.length} · ${escapeHtml(district.name)}`,
+              balloonContent: `<b>🚨 ${escapeHtml(district.name)}</b><br/>${titles}`,
             }}
             options={{
               preset: 'islands#redIcon',

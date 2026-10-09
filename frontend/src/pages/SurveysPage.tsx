@@ -8,8 +8,9 @@ import { useAuth } from '../context/AuthContext';
 import { hasAnyRole } from '../utils/roles';
 
 export function SurveysPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const canManage = hasAnyRole(role, ['author', 'admin']);
+  const canManageSurvey = (s: Survey) => hasAnyRole(role, ['admin']) || s.created_by === user?.id;
 
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);

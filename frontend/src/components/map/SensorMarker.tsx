@@ -1,5 +1,6 @@
 import { Placemark } from '@pbe/react-yandex-maps';
 import type { Sensor } from '../../types/api';
+import { escapeHtml } from '../../utils/html';
 
 // Цвет по типу датчика (не пересекается с палитрой ECI/жалоб).
 // air → индиго, water → циан.
@@ -33,11 +34,11 @@ export function SensorMarkers({ sensors, reportMode, onPick, districtNames = {} 
             key={`sensor-${s.id}`}
             geometry={[lat, lon]}
             properties={{
-              hintContent: `${s.name} · ${typeLabel}`,
+              hintContent: `${escapeHtml(s.name)} · ${escapeHtml(typeLabel)}`,
               balloonContent: `
-                <b>${s.name}</b><br/>
-                Тип: ${typeLabel}<br/>
-                Статус: ${s.status}${district ? `<br/>Район: ${district}` : ''}
+                <b>${escapeHtml(s.name)}</b><br/>
+                Тип: ${escapeHtml(typeLabel)}<br/>
+                Статус: ${escapeHtml(s.status)}${district ? `<br/>Район: ${escapeHtml(district)}` : ''}
               `,
             }}
             options={{

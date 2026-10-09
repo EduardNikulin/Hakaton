@@ -69,16 +69,17 @@ class DistrictRepository:
         return result.scalars().first()
 
     async def get_history(self, district_id: int, limit: int = 100) -> list[dict]:
-        """История ECI района для графика динамики."""
+        """История ECI района для графика динамики (последние `limit` точек по возрастанию)."""
         result = await self.db.execute(
             select(EcoIndexHistory.calculated_at, EcoIndexHistory.eci_score)
             .where(EcoIndexHistory.district_id == district_id)
-            .order_by(EcoIndexHistory.calculated_at.asc())
+            .order_by(EcoIndexHistory.calculated_at.desc())
             .limit(limit)
         )
+        rows = result.all()
         return [
             {"calculated_at": row.calculated_at.isoformat(), "eci_score": row.eci_score}
-            for row in result.all()
+            for row in reversed(rows)
         ]
 
     # ── GeoJSON-обёртка ─────────────────────────────────────────────

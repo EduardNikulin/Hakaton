@@ -9,6 +9,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  updateUser: (user: CurrentUser) => void;
   logout: () => void;
 }
 
@@ -48,6 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+    // Любой 401 из API → сбрасываем сессию (ProtectedRoute уведёт на /login)
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setUser(null);
+      setRole(null);
+    };
+    window.addEventListener('ecocity:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('ecocity:unauthorized', onUnauthorized);
+  }, []);
+
   const login = async (email: string, password: string) => {
     await authApi.login(email, password);
     const me = await authApi.fetchMe();
@@ -60,6 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await authApi.fetchMe();
     setUser(me);
     setRole(resolveRole(me));
+  };
+
+  const updateUser = (u: CurrentUser) => {
+    setUser(u);
+    setRole(resolveRole(u));
   };
 
   const logout = () => {
@@ -77,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         register,
+        updateUser,
         logout,
       }}
     >

@@ -12,7 +12,7 @@ const THEME_OPTIONS: { key: ThemeMode; label: string }[] = [
 ];
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const [fullName, setFullName] = useState(user?.full_name ?? '');
@@ -38,7 +38,8 @@ export function SettingsPage() {
     setProfileMsg('');
     setProfileError('');
     try {
-      await authApi.updateMe({ full_name: fullName.trim() || null, ...notify });
+      const updated = await authApi.updateMe({ full_name: fullName.trim() || null, ...notify });
+      updateUser(updated);
       setProfileMsg('Изменения сохранены');
     } catch (e) {
       setProfileError(e instanceof Error ? e.message : 'Ошибка сохранения');

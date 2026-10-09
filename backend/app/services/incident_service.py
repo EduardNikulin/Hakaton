@@ -24,6 +24,9 @@ class IncidentService:
     async def get(self, incident_id: int) -> Incident | None:
         return await self.incidents.get(incident_id)
 
+    async def get_or_404(self, incident_id: int) -> Incident:
+        return await self._get_or_404(incident_id)
+
     async def _get_or_404(self, incident_id: int) -> Incident:
         incident = await self.incidents.get(incident_id)
         if not incident:
@@ -91,7 +94,7 @@ class IncidentService:
 
         if incident.operator_comment:
             timeline.append({
-                "time": incident.created_at.isoformat(),
+                "time": (incident.updated_at or incident.created_at).isoformat(),
                 "event": f"Комментарий оператора: {incident.operator_comment}",
                 "type": "info",
             })

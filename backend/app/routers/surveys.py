@@ -49,10 +49,10 @@ async def get_survey(id: int, db: AsyncSession = Depends(get_db)):
 async def update_survey(
     id: int, is_active: bool,
     db: AsyncSession = Depends(get_db),
-    _=allow_authors,
+    current_user: User = Depends(RoleChecker(allowed_roles=["author", "admin"])),
 ):
-    """Запуск / деактивация опроса (Доступ: Автор, Админ)."""
-    await SurveyService(db).set_active(id, is_active)
+    """Запуск / деактивация опроса (Доступ: автор-владелец, Админ)."""
+    await SurveyService(db).set_active(id, is_active, current_user)
     return {"message": "Статус опроса успешно изменен"}
 
 
@@ -60,10 +60,10 @@ async def update_survey(
 async def delete_survey(
     id: int,
     db: AsyncSession = Depends(get_db),
-    _=allow_authors,
+    current_user: User = Depends(RoleChecker(allowed_roles=["author", "admin"])),
 ):
-    """Каскадное удаление опроса с вопросами (Доступ: Автор, Админ)."""
-    await SurveyService(db).delete_survey(id)
+    """Каскадное удаление опроса (Доступ: автор-владелец, Админ)."""
+    await SurveyService(db).delete_survey(id, current_user)
     return {"message": "Опрос успешно удален"}
 
 
@@ -75,5 +75,5 @@ async def submit_survey_answers(
     current_user: User = Depends(get_current_user),
 ):
     """Сдача опроса жителем."""
-    await SurveyService(db).submit_answers(current_user, data.answers)
+    await SurveyService(db).submit_answers(current_user, survey_id=id, answers=data.answers)
     return {"status": "success", "message": "Ваши ответы успешно зарегистрированы"}

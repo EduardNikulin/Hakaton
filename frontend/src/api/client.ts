@@ -36,6 +36,7 @@ async function request<T>(
   // 401 → чистим токен (ProtectedRoute перенаправит на /login)
   if (res.status === 401) {
     clearToken();
+    window.dispatchEvent(new Event('ecocity:unauthorized'));
     throw new ApiError(401, 'Сессия истекла. Войдите заново.');
   }
 

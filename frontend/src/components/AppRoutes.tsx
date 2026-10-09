@@ -30,6 +30,16 @@ export function AppRoutes() {
       <Route path="/incidents" element={<ProtectedRoute><IncidentsPage /></ProtectedRoute>} />
       <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetailPage /></ProtectedRoute>} />
 
+      {/* Доска оператора — только admin */}
+      <Route
+        path="/operator"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <OperatorPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* === LEGACY: /analytics без проверки роли (любой залогиненный) === */}
       {/* <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} /> */}
       {/* Аналитика — только author/admin (на бэке dashboard требует этих ролей) */}

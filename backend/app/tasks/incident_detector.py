@@ -15,7 +15,7 @@ from sqlalchemy.future import select
 from app.config import settings
 from app.database import AsyncSessionLocal, utcnow
 from app.models.feedback import Report
-from app.models.incidents import Incident
+from app.models.incidents import Incident, incident_sensors
 from app.models.sensors import Sensor
 from app.services.detector import compute_confidence, is_anomaly
 
@@ -38,26 +38,29 @@ async def run_incident_detection(sensor_id: int, metric_name: str, value: float)
         if sensor is None or sensor.district_id is None:
             return
 
-        # Дедупликация: по району уже есть открытый инцидент - новый не создаём
+        # Дедупликация: открытый инцидент по ЭТОМУ ЖЕ датчику — новый не создаём.
+        # (другой датчик того же района может дать отдельный инцидент)
         existing = await db.execute(
-            select(Incident.id).where(
-                Incident.district_id == sensor.district_id,
+            select(Incident.id)
+            .join(incident_sensors, incident_sensors.c.incident_id == Incident.id)
+            .where(
                 Incident.status != "RESOLVED",
-            ).limit(1)
+                incident_sensors.c.sensor_id == sensor_id,
+            )
+            .limit(1)
         )
         if existing.scalars().first():
             return
 
         # Жалобы за окно в радиусе от датчика (ST_DWithin по географии, метры)
         since = utcnow() - timedelta(hours=settings.incident_detection_window_hours)
+        sensor_location = select(Sensor.location).where(Sensor.id == sensor_id).scalar_subquery()
         reports_result = await db.execute(
-            select(Report)
-            .join(Sensor, Sensor.id == sensor_id)
-            .where(
+            select(Report).where(
                 Report.created_at >= since,
                 func.ST_DWithin(
                     cast(Report.location, Geography),
-                    cast(Sensor.location, Geography),
+                    cast(sensor_location, Geography),
                     settings.incident_detection_radius_meters,
                 ),
             )

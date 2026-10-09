@@ -21,7 +21,7 @@ export function fetchMyReports(): Promise<Report[]> {
 }
 
 export function updateReport(id: number, description: string): Promise<Report> {
-  return api.patch<Report>(`/api/v1/feedback/reports/${id}?description=${encodeURIComponent(description)}`);
+  return api.patch<Report>(`/api/v1/feedback/reports/${id}`, { description });
 }
 
 export function deleteReport(id: number): Promise<void> {
